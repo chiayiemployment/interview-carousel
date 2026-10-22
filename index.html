@@ -9,6 +9,7 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans TC', sans-serif; }
   body { background-color: #121132; color: #FFFFFF; min-height: 100vh; }
+  
   .form-container { 
     background: linear-gradient(135deg, rgba(31, 29, 83, 0.95) 0%, rgba(76, 35, 124, 0.85) 100%); 
     border-radius: 24px; 
@@ -31,19 +32,37 @@
   .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #28C4FF; width: 2.25rem; height: 2.25rem; animation: spin 1s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* 彈窗遮罩 */
   .modal-backdrop {
-    background-color: rgba(10, 9, 28, 0.82);
-    backdrop-filter: blur(4px);
+    background-color: rgba(10, 9, 28, 0.85);
+    backdrop-filter: blur(5px);
   }
 
-  /* 已面試/已編輯灰底樣式 */
-  .row-interviewed {
-    background-color: #E2E8F0 !important; /* 淺灰底 */
-    color: #475569 !important;
+  /* 🌟 卡片樣式 1：等候中 (高亮白底) */
+  .candidate-card-pending {
+    background-color: #FFFFFF;
+    color: #0F172A;
+    border: 2px solid #38BDF8;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   }
-  .row-interviewed:hover {
-    background-color: #CBD5E1 !important;
+  .candidate-card-pending:hover, .candidate-card-pending:active {
+    border-color: #FACC15;
+    transform: translateY(-2px);
+  }
+
+  /* 🌟 卡片樣式 2：面試中 (亮橘色/被其他人資操作中) */
+  .candidate-card-interviewing {
+    background-color: #FFF7ED; /* 淺橘底 */
+    color: #9A3412;
+    border: 2px solid #FB923C;
+    box-shadow: 0 0 12px rgba(251, 146, 60, 0.35);
+  }
+
+  /* 🌟 卡片樣式 3：已完成面試 (灰底靜音狀態) */
+  .candidate-card-completed {
+    background-color: #E2E8F0;
+    color: #475569;
+    border: 2px solid #94A3B8;
+    opacity: 0.88;
   }
 </style>
 </head>
@@ -52,16 +71,13 @@
 <!-- ==================== 1. 廠商身分驗證登入畫面 ==================== -->
 <div id="loginSection" class="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
   <div class="form-container p-6 sm:p-10 md:p-12 max-w-xl w-full text-center space-y-6">
-    <!-- 表頭區塊 -->
     <div class="space-y-2 border-b border-purple-400/20 pb-5">
       <div class="text-lg sm:text-xl font-bold text-cyan-300 tracking-wider">數位永續 薪在嘉義</div>
       <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-wide">2026 大嘉義就業博覽會</div>
       <div class="text-2xl sm:text-3xl font-black text-amber-300 pt-1">廠商面試管理系統</div>
     </div>
 
-    <!-- 表單輸入區塊 -->
     <div id="authBox" class="space-y-5 pt-2">
-      <!-- 選擇廠商 -->
       <div class="text-left space-y-2">
         <label for="companySelect" class="text-lg font-bold text-purple-200 block">請選擇公司名稱</label>
         <select id="companySelect" class="w-full px-4 py-3 text-lg font-bold rounded-xl border-2 border-cyan-400 focus:outline-none focus:border-amber-300 transition">
@@ -69,7 +85,6 @@
         </select>
       </div>
 
-      <!-- 輸入 8 位數密碼 -->
       <div class="text-left space-y-2">
         <label for="pinInput" class="text-lg font-bold text-purple-200 block">請輸入 8 位數密碼</label>
         <input 
@@ -86,7 +101,6 @@
       </button>
     </div>
 
-    <!-- 驗證載入中提示 -->
     <div id="loadingBox" class="hidden py-8 space-y-4">
       <span class="spinner"></span>
       <p id="loadingStatusText" class="text-xl font-bold text-cyan-300">正在驗證密碼並載入面試名單...</p>
@@ -95,119 +109,96 @@
 </div>
 
 <!-- ==================== 2. 廠商專屬面試名單主畫面 ==================== -->
-<div id="appSection" class="hidden flex-1 flex flex-col p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+<div id="appSection" class="hidden flex-1 flex flex-col p-3 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full">
+  
   <!-- 頂部資訊列 -->
-  <div class="flex flex-col md:flex-row md:items-center justify-between bg-slate-900/90 border-2 border-cyan-400/80 rounded-2xl p-4 sm:p-6 shadow-2xl gap-4 mb-6">
-    <div class="space-y-1">
-      <div class="flex items-center gap-3">
-        <span class="px-3 py-1 bg-amber-400 text-slate-950 font-black rounded-lg text-sm sm:text-base">面試攤位</span>
-        <h1 id="currentCompanyName" class="text-2xl sm:text-3xl font-black text-white">--</h1>
+  <div class="bg-slate-900/95 border-2 border-cyan-400 rounded-2xl p-4 sm:p-5 shadow-2xl mb-4 space-y-3">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="px-2.5 py-0.5 bg-amber-400 text-slate-950 font-black rounded text-xs sm:text-sm">面試攤位</span>
+          <span id="candidateCountBadge" class="text-xs sm:text-sm font-bold text-cyan-300 bg-slate-800 px-2 py-0.5 rounded border border-cyan-400/30">應徵總數：0 人</span>
+        </div>
+        <h1 id="currentCompanyName" class="text-xl sm:text-2xl font-black text-white tracking-wide">--</h1>
       </div>
-      <p class="text-sm sm:text-base text-cyan-300 font-bold">💡 點選求職者「姓名」即可檢視完整履歷並回填面試紀錄；已面試完成者將以灰底標示。</p>
-    </div>
-    <div class="flex items-center gap-4">
-      <div class="text-right">
-        <span class="text-xs text-gray-300 block">應徵總人數</span>
-        <span id="candidateCountBadge" class="text-2xl font-black text-amber-300">0 人</span>
-      </div>
-      <button onclick="logout()" class="px-5 py-2.5 bg-red-600/90 hover:bg-red-500 font-bold rounded-xl text-white transition shadow-lg text-sm sm:text-base">
-        安全登出
+      <button onclick="logout()" class="px-3.5 py-1.5 bg-red-600/90 hover:bg-red-500 font-bold rounded-lg text-white transition text-xs sm:text-sm shadow whitespace-nowrap">
+        登出
       </button>
+    </div>
+    
+    <div class="flex items-center justify-between text-xs sm:text-sm text-cyan-200 font-medium pt-2 border-t border-slate-800 flex-wrap gap-2">
+      <span>💡 點選求職者卡片即可開啟履歷；每 5 秒自動同步多位人資進度。</span>
+      <div class="flex items-center gap-3">
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-orange-500 rounded-full inline-block"></span> 橘色為他人面試中</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-slate-400 rounded-full inline-block"></span> 灰底為已面試</span>
+      </div>
     </div>
   </div>
 
-  <!-- 求職者表格卡片（已移除序號、年齡、操作欄位） -->
-  <div class="flex-1 bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col border-2 border-black">
-    <div class="overflow-x-auto flex-1">
-      <table class="w-full text-center border-collapse">
-        <thead>
-          <tr class="bg-amber-300 text-black font-black text-base sm:text-lg border-b-2 border-black">
-            <th class="py-3.5 px-6 border-r border-black w-48 text-center">姓名（點選開啟履歷）</th>
-            <th class="py-3.5 px-6 border-r border-black w-44">身分證字號</th>
-            <th class="py-3.5 px-6 border-r border-black text-left">應徵職務</th>
-            <th class="py-3.5 px-4 border-r border-black w-36">擬錄取</th>
-            <th class="py-3.5 px-6 w-48">面試紀錄狀態</th>
-          </tr>
-        </thead>
-        <tbody id="candidateTableBody" class="divide-y divide-gray-300 text-sm sm:text-base font-bold">
-          <!-- 動態載入名單 -->
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <!-- 卡片式求職者清單 -->
+  <div id="candidateCardsContainer" class="space-y-3 pb-8"></div>
 </div>
 
 <!-- ==================== 3. 完整網頁履歷檢視與回填 Modal ==================== -->
 <div id="resumeModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-  <div class="bg-slate-900 border-2 border-cyan-400 rounded-2xl max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-white my-auto">
+  <div class="bg-slate-900 border-2 border-cyan-400 rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-white my-auto">
     
-    <!-- Modal 標題列 -->
-    <div class="bg-gradient-to-r from-purple-900 to-indigo-900 px-6 py-4 flex items-center justify-between border-b border-cyan-400/40">
-      <div class="flex items-center gap-3">
-        <span class="text-2xl font-black text-amber-300" id="modalCandidateName">求職者姓名</span>
-        <span class="text-xs sm:text-sm bg-cyan-600 px-3 py-1 rounded-full font-bold" id="modalJobTitle">應徵職務</span>
+    <div class="bg-gradient-to-r from-purple-900 to-indigo-900 px-5 py-3.5 flex items-center justify-between border-b border-cyan-400/40">
+      <div class="flex items-center gap-2.5">
+        <span class="text-xl sm:text-2xl font-black text-amber-300" id="modalCandidateName">求職者姓名</span>
+        <span class="text-xs bg-cyan-600 px-2.5 py-0.5 rounded-full font-bold" id="modalJobTitle">應徵職務</span>
       </div>
-      <button onclick="closeModal()" class="text-gray-300 hover:text-white text-3xl font-bold leading-none">&times;</button>
+      <button onclick="closeModal()" class="text-gray-300 hover:text-white text-3xl font-bold leading-none p-1">&times;</button>
     </div>
 
-    <!-- Modal 履歷內容滾動區 -->
-    <div class="p-6 space-y-6 overflow-y-auto flex-1 text-slate-100" id="modalResumeBody">
-      
-      <!-- 基本資訊卡片 -->
-      <div class="bg-slate-800/90 rounded-xl p-5 border border-purple-400/30 space-y-4">
-        <h3 class="text-lg font-black text-cyan-300 border-b border-slate-700 pb-2">📋 基本資料</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm sm:text-base">
-          <div><span class="text-gray-400">身分證字號：</span><span id="m_idNo" class="font-bold">--</span></div>
+    <div class="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 text-slate-100" id="modalResumeBody">
+      <div class="bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-purple-400/30 space-y-3">
+        <h3 class="text-base font-black text-cyan-300 border-b border-slate-700 pb-1.5">📋 基本資料</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
+          <div><span class="text-gray-400">身分證末3碼：</span><span id="m_idNo" class="font-bold text-amber-300 font-mono text-sm">--</span></div>
           <div><span class="text-gray-400">出生日期：</span><span id="m_birthday" class="font-bold">--</span></div>
           <div><span class="text-gray-400">聯絡電話：</span><span id="m_phone" class="font-bold">--</span></div>
-          <div><span class="text-gray-400">電子信箱：</span><span id="m_email" class="font-bold">--</span></div>
           <div><span class="text-gray-400">最高學歷：</span><span id="m_education" class="font-bold">--</span></div>
-          <div><span class="text-gray-400">兵役 / 婚姻：</span><span id="m_military" class="font-bold">--</span></div>
-          <div class="sm:col-span-2 md:col-span-3"><span class="text-gray-400">通訊地址：</span><span id="m_address" class="font-bold">--</span></div>
+          <div class="col-span-2"><span class="text-gray-400">電子信箱：</span><span id="m_email" class="font-bold">--</span></div>
+          <div class="col-span-2"><span class="text-gray-400">通訊地址：</span><span id="m_address" class="font-bold">--</span></div>
         </div>
       </div>
 
-      <!-- 額外履歷自傳/就業意向區 -->
-      <div id="dynamicFieldsContainer" class="space-y-4">
-        <!-- 動態帶出所有非空欄位 -->
-      </div>
+      <div id="dynamicFieldsContainer" class="space-y-3"></div>
 
-      <!-- 面試過程紀錄與擬錄取回寫區塊 -->
-      <div class="bg-indigo-950/80 rounded-xl p-5 border-2 border-amber-300/80 space-y-4 shadow-xl">
-        <div class="flex items-center justify-between border-b border-indigo-800 pb-2">
-          <h3 class="text-lg sm:text-xl font-black text-amber-300">📝 廠商面試評核與回填</h3>
-          <span class="text-xs text-cyan-300 font-bold">送出後將直接寫入貴公司試算表並標示為已面試</span>
+      <!-- 面試過程紀錄與擬錄取回寫 -->
+      <div class="bg-indigo-950/90 rounded-xl p-4 sm:p-5 border-2 border-amber-300 space-y-3.5 shadow-xl">
+        <div class="flex items-center justify-between border-b border-indigo-800 pb-1.5">
+          <h3 class="text-base sm:text-lg font-black text-amber-300">📝 廠商面試評核回填</h3>
+          <span class="text-xs text-cyan-300 font-bold">送出即時回寫試算表</span>
         </div>
 
-        <!-- 擬錄取 Checkbox -->
-        <div class="flex items-center gap-3 bg-slate-900/90 p-3.5 rounded-xl border border-cyan-400/50">
-          <input type="checkbox" id="modalIsAccepted" class="w-6 h-6 text-green-500 rounded focus:ring-2 focus:ring-green-400 cursor-pointer">
-          <label for="modalIsAccepted" class="text-base sm:text-lg font-black text-white cursor-pointer select-none">
-            ⭐ 擬錄取此求職者（勾選後寫入試算表【是否錄取】）
+        <div class="flex items-center gap-3 bg-slate-900/90 p-3 rounded-lg border border-cyan-400/50">
+          <input type="checkbox" id="modalIsAccepted" class="w-5 h-5 text-green-500 rounded focus:ring-2 focus:ring-green-400 cursor-pointer">
+          <label for="modalIsAccepted" class="text-sm sm:text-base font-black text-white cursor-pointer select-none">
+            ⭐ 擬錄取此求職者（勾選後寫入【是否錄取】）
           </label>
         </div>
 
-        <!-- 面試過程紀錄輸入框 -->
-        <div class="space-y-2">
-          <label for="modalInterviewNotes" class="text-sm sm:text-base font-bold text-purple-200 block">
-            面試過程 / 評語備註（對應試算表【面試紀錄】欄位）：
+        <div class="space-y-1.5">
+          <label for="modalInterviewNotes" class="text-xs sm:text-sm font-bold text-purple-200 block">
+            面試過程 / 評語備註（寫入【面試紀錄】欄位）：
           </label>
           <textarea 
             id="modalInterviewNotes" 
-            rows="4" 
-            placeholder="請輸入面試狀況、專業能力評估、期望待遇協商、後續聯絡約定等紀錄..." 
-            class="w-full bg-slate-900 border-2 border-purple-400/60 rounded-xl p-3.5 text-white font-medium focus:outline-none focus:border-amber-300 transition text-sm sm:text-base"></textarea>
+            rows="3" 
+            placeholder="請輸入面試狀況、適任評估、預計聯絡時間等紀錄..." 
+            class="w-full bg-slate-900 border-2 border-purple-400/60 rounded-xl p-3 text-white font-medium focus:outline-none focus:border-amber-300 transition text-sm"></textarea>
         </div>
       </div>
     </div>
 
-    <!-- Modal 底部按鈕列 -->
-    <div class="bg-slate-950 px-6 py-4 flex items-center justify-end gap-4 border-t border-slate-800">
-      <button onclick="closeModal()" class="px-5 py-2.5 rounded-xl border border-gray-500 text-gray-300 hover:text-white hover:bg-slate-800 font-bold text-sm sm:text-base transition">
+    <div class="bg-slate-950 px-5 py-3 flex items-center justify-end gap-3 border-t border-slate-800">
+      <button onclick="closeModal()" class="px-4 py-2 rounded-lg border border-gray-500 text-gray-300 hover:text-white font-bold text-sm transition">
         取消返回
       </button>
-      <button onclick="submitEvaluation()" id="saveEvalBtn" class="px-8 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-xl text-base sm:text-lg shadow-lg transition flex items-center gap-2">
-        <span>儲存面試資料</span>
+      <button onclick="submitEvaluation()" id="saveEvalBtn" class="px-6 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-lg text-sm sm:text-base shadow-lg transition">
+        儲存面試資料
       </button>
     </div>
   </div>
@@ -215,25 +206,23 @@
 
 <script>
 // ⚠️ 請填入您的 Apps Script Web App 部署網址
-const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbz-uvu5D7GUznL_88E-jDbzNjrr4tgvzIIKUvkCMq0lZ7MUDjFNw7u5un2IqNRxkpZa/exec';
+const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbxC_Kgiu86I-asFgTIcDP5bvmqOviT4MAJJ1uB4pcKHJAkyYL3QLtL8hb2yPd_avjaJ/exec';
 
 let currentCompany = '';
 let currentPin = '';
 let currentCandidates = [];
 let activeCandidate = null;
+let pollTimer = null; // 背景輪詢定時器
 
 document.addEventListener('DOMContentLoaded', () => {
   loadCompanyList();
 });
 
-/**
- * 1. 載入廠商清單
- */
 function loadCompanyList() {
   const selectElem = document.getElementById('companySelect');
   const callbackName = 'cb_getCompanyList_' + Date.now();
   window[callbackName] = function(res) {
-    if (res && res.success && Array.isArray(res.companyList) && res.companyList.length > 0) {
+    if (res && res.success && Array.isArray(res.companyList)) {
       selectElem.innerHTML = '<option value="" disabled selected>-- 請選擇公司名稱 --</option>';
       res.companyList.forEach(compName => {
         const option = document.createElement('option');
@@ -251,8 +240,6 @@ function loadCompanyList() {
           }
         }
       }
-    } else {
-      selectElem.innerHTML = '<option value="" disabled>載入失敗：請確認後端設定</option>';
     }
     delete window[callbackName];
     const scriptEl = document.getElementById(callbackName);
@@ -272,20 +259,13 @@ function handleKeyPress(event) {
   }
 }
 
-/**
- * 2. 登入身分驗證並載入該廠商專屬名單
- */
 function submitPinAuth() {
   const selectElem = document.getElementById('companySelect');
   const selectedCompany = selectElem.value;
   const pinInput = document.getElementById('pinInput').value.trim();
 
-  if (!selectedCompany) {
-    alert('請先選擇公司名稱！');
-    return;
-  }
-  if (pinInput.length !== 8) {
-    alert('請輸入完整的 8 位數密碼！');
+  if (!selectedCompany || pinInput.length !== 8) {
+    alert('請選擇公司並輸入完整的 8 位數密碼！');
     return;
   }
 
@@ -294,8 +274,7 @@ function submitPinAuth() {
   authBox.classList.add('hidden');
   loadingBox.classList.remove('hidden');
 
-  const callbackName = 'cb_login_' + Date.now();
-  window[callbackName] = function(res) {
+  fetchCandidateList(selectedCompany, pinInput, (res) => {
     if (res && res.success) {
       currentCompany = selectedCompany;
       currentPin = pinInput;
@@ -304,12 +283,22 @@ function submitPinAuth() {
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('appSection').classList.remove('hidden');
       document.getElementById('currentCompanyName').textContent = currentCompany;
-      renderCandidateTable();
+      renderCandidateCards();
+
+      // 🌟 啟動多位人資每 5 秒背景自動同步
+      startPolling();
     } else {
       alert(res.message || '🔒 密碼錯誤！請輸入貴公司專屬的 8 位數密碼。');
       authBox.classList.remove('hidden');
       loadingBox.classList.add('hidden');
     }
+  });
+}
+
+function fetchCandidateList(comp, pin, callback) {
+  const callbackName = 'cb_fetch_' + Date.now();
+  window[callbackName] = function(res) {
+    callback(res);
     delete window[callbackName];
     const scriptEl = document.getElementById(callbackName);
     if (scriptEl) scriptEl.remove();
@@ -317,90 +306,117 @@ function submitPinAuth() {
 
   const script = document.createElement('script');
   script.id = callbackName;
-  script.src = `${SCRIPT_API_URL}?action=loginAndFetchList&company=${encodeURIComponent(selectedCompany)}&pin=${encodeURIComponent(pinInput)}&callback=${callbackName}`;
+  script.src = `${SCRIPT_API_URL}?action=loginAndFetchList&company=${encodeURIComponent(comp)}&pin=${encodeURIComponent(pin)}&callback=${callbackName}`;
   document.body.appendChild(script);
 }
 
+// 多台手機/平板背景同步輪詢
+function startPolling() {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(() => {
+    // 只有在 Modal 沒被打開時才更新清單，避免覆蓋正在輸入的內容
+    if (!activeCandidate && currentCompany && currentPin) {
+      fetchCandidateList(currentCompany, currentPin, (res) => {
+        if (res && res.success) {
+          currentCandidates = res.candidates || [];
+          renderCandidateCards();
+        }
+      });
+    }
+  }, 5000); // 5秒輪詢一次
+}
+
 /**
- * 3. 渲染廠商求職者名單列表
- * - 已移除序號、年齡、操作
- * - 身分證只呈現後 3 碼
- * - 點選姓名開啟履歷
- * - 編輯過（已填寫面試紀錄或擬錄取）該列變成灰底
+ * 🌟 渲染求職者卡片：包含「面試中」狀態區分
  */
-function renderCandidateTable() {
-  const tbody = document.getElementById('candidateTableBody');
-  tbody.innerHTML = '';
-  document.getElementById('candidateCountBadge').textContent = `${currentCandidates.length} 人`;
+function renderCandidateCards() {
+  const container = document.getElementById('candidateCardsContainer');
+  container.innerHTML = '';
+  document.getElementById('candidateCountBadge').textContent = `應徵總數：${currentCandidates.length} 人`;
 
   if (currentCandidates.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-gray-500 font-bold text-lg">目前尚無預約或報到的求職者</td></tr>`;
+    container.innerHTML = `
+      <div class="bg-slate-900/80 border border-slate-700 rounded-2xl py-12 text-center text-gray-400 font-bold">
+        目前尚無預約或報到的求職者名單
+      </div>
+    `;
     return;
   }
 
   currentCandidates.forEach((cand) => {
-    const tr = document.createElement('tr');
+    const rawNotes = (cand.interviewNotes || '').trim();
+    
+    // 狀態判定
+    const isCompleted = cand.isAccepted || (rawNotes !== '' && rawNotes !== '面試中');
+    const isInterviewing = !isCompleted && rawNotes === '面試中';
 
-    // 判斷是否已經面試/編輯過（有擬錄取或已填寫面試紀錄）
-    const isEdited = cand.isAccepted || (cand.interviewNotes && cand.interviewNotes.trim() !== '');
+    // 取得末 3 碼
+    const id3Digits = cand.idNo && cand.idNo.length >= 3 
+      ? cand.idNo.substring(cand.idNo.length - 3) 
+      : (cand.idNo || '--');
 
-    // 🌟 編輯過該列呈現灰底，未面試者維持純白底與 hover 效果
-    if (isEdited) {
-      tr.className = 'row-interviewed transition border-b border-gray-300';
+    let cardClass = '';
+    let statusBadge = '';
+
+    if (isCompleted) {
+      // 1. 已完成面試
+      cardClass = 'candidate-card-completed cursor-pointer';
+      statusBadge = '<span class="px-2.5 py-1 bg-slate-400 text-slate-900 text-xs font-black rounded-lg">已完成面試</span>';
+    } else if (isInterviewing) {
+      // 2. 🌟 另一位人資正在操作「面試中」
+      cardClass = 'candidate-card-interviewing cursor-pointer';
+      statusBadge = '<span class="px-2.5 py-1 bg-orange-500 text-white text-xs font-black rounded-lg animate-pulse shadow">⚠️ 面試中</span>';
     } else {
-      tr.className = 'bg-white hover:bg-amber-50 transition border-b border-gray-200';
+      // 3. 等候中
+      cardClass = 'candidate-card-pending cursor-pointer';
+      statusBadge = '<span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-black rounded-lg border border-amber-300">等候面試中</span>';
     }
 
-    // 🌟 身分證字號只呈現後 3 碼
-    const last3Id = cand.idNo && cand.idNo.length >= 3 
-      ? '***' + cand.idNo.substring(cand.idNo.length - 3) 
-      : '***';
+    const acceptedBadge = cand.isAccepted 
+      ? '<span class="px-2.5 py-1 bg-green-600 text-white text-xs font-black rounded-lg shadow-sm">✓ 擬錄取</span>' 
+      : '';
 
-    // 擬錄取標籤
-    const isAcceptedBadge = cand.isAccepted 
-      ? '<span class="inline-block px-3 py-1 bg-green-600 text-white text-xs font-black rounded-full shadow-sm">✓ 擬錄取</span>' 
-      : '<span class="text-gray-400 text-xs font-bold">未標記</span>';
+    const card = document.createElement('div');
+    card.className = `${cardClass} rounded-2xl p-4 transition duration-200 flex items-center justify-between gap-3`;
+    
+    card.onclick = () => {
+      if (isInterviewing) {
+        if (!confirm('⚠️ 另一位人資可能正在面試該求職者，確定要進入檢視嗎？')) {
+          return;
+        }
+      }
+      openResumeModal(cand);
+    };
 
-    // 面試紀錄狀態
-    const notesStatus = (cand.interviewNotes && cand.interviewNotes.trim() !== '')
-      ? '<span class="text-slate-700 text-xs font-bold bg-slate-300 px-2.5 py-1 rounded inline-block">已完成面試</span>'
-      : '<span class="text-amber-600 text-xs font-bold bg-amber-100 px-2.5 py-1 rounded inline-block">等候面試中</span>';
+    card.innerHTML = `
+      <div class="flex-1 min-w-0 space-y-1">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <span class="text-xl sm:text-2xl font-black ${isCompleted ? 'text-slate-800' : (isInterviewing ? 'text-orange-950' : 'text-blue-900')} tracking-wide">
+            ${cand.name}
+          </span>
+          <span class="font-mono text-xs font-bold px-2 py-0.5 rounded ${isCompleted ? 'bg-slate-300 text-slate-700' : 'bg-slate-100 text-slate-600 border border-slate-300'}">
+            末3碼：${id3Digits}
+          </span>
+        </div>
+        <div class="text-sm sm:text-base font-extrabold ${isCompleted ? 'text-slate-600' : 'text-slate-700'} truncate">
+          ${cand.jobTitle}
+        </div>
+      </div>
 
-    tr.innerHTML = `
-      <!-- 🌟 點選「姓名」即可開啟履歷表 -->
-      <td class="py-3.5 px-6 border-r border-gray-300 text-center">
-        <button 
-          onclick="openResumeModalByCandidate('${cand.idNo}')" 
-          class="text-blue-700 hover:text-blue-900 underline font-black text-lg sm:text-xl transition tracking-wide hover:scale-105 inline-block">
-          ${cand.name}
-        </button>
-      </td>
-      <td class="py-3.5 px-6 border-r border-gray-300 font-mono tracking-wider font-bold text-base">
-        ${last3Id}
-      </td>
-      <td class="py-3.5 px-6 border-r border-gray-300 text-left font-extrabold text-slate-800 text-base">
-        ${cand.jobTitle}
-      </td>
-      <td class="py-3.5 px-4 border-r border-gray-300 text-center">
-        ${isAcceptedBadge}
-      </td>
-      <td class="py-3.5 px-6 text-center">
-        ${notesStatus}
-      </td>
+      <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+        <div class="flex items-center gap-1.5 flex-wrap justify-end">
+          ${acceptedBadge}
+          ${statusBadge}
+        </div>
+      </div>
     `;
-    tbody.appendChild(tr);
+
+    container.appendChild(card);
   });
 }
 
-function openResumeModalByCandidate(idNo) {
-  const cand = currentCandidates.find(c => c.idNo === idNo);
-  if (cand) {
-    openResumeModal(cand);
-  }
-}
-
 /**
- * 4. 彈出完整履歷
+ * 開啟履歷：通知後端標記為「面試中」
  */
 function openResumeModal(cand) {
   activeCandidate = cand;
@@ -408,27 +424,30 @@ function openResumeModal(cand) {
   document.getElementById('modalJobTitle').textContent = cand.jobTitle;
   
   document.getElementById('modalIsAccepted').checked = cand.isAccepted;
-  document.getElementById('modalInterviewNotes').value = cand.interviewNotes || '';
+  document.getElementById('modalInterviewNotes').value = (cand.interviewNotes === '面試中') ? '' : (cand.interviewNotes || '');
 
-  // 彈窗內部身分證字號顯示末 3 碼
-  const last3 = cand.idNo && cand.idNo.length >= 3 ? '***' + cand.idNo.substring(cand.idNo.length - 3) : '--';
-  document.getElementById('m_idNo').textContent = last3;
+  const id3Digits = cand.idNo && cand.idNo.length >= 3 ? cand.idNo.substring(cand.idNo.length - 3) : (cand.idNo || '--');
+  document.getElementById('m_idNo').textContent = id3Digits;
+
   document.getElementById('m_birthday').textContent = '讀取中...';
   document.getElementById('m_phone').textContent = '讀取中...';
   document.getElementById('m_email').textContent = '讀取中...';
   document.getElementById('m_education').textContent = '讀取中...';
-  document.getElementById('m_military').textContent = '讀取中...';
   document.getElementById('m_address').textContent = '讀取中...';
   document.getElementById('dynamicFieldsContainer').innerHTML = '<div class="py-4 text-center text-cyan-300 font-bold"><span class="spinner"></span> 正在載入完整履歷資料...</div>';
 
   document.getElementById('resumeModal').classList.remove('hidden');
 
+  // 🌟 通知後端將狀態更新為「面試中」，讓其他人資畫面同步顯示警示
+  setCandidateStatus(cand.idNo, '面試中');
+
+  // 載入履歷明細
   const callbackName = 'cb_getResume_' + Date.now();
   window[callbackName] = function(res) {
     if (res && res.success && res.resume) {
       renderResumeDetails(res.resume);
     } else {
-      document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-amber-400 font-bold">⚠️ 求職登記表中未找到該求職者之詳細履歷資料</p>';
+      document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-amber-400 font-bold text-center py-2">⚠️ 求職登記表中未找到該求職者之詳細履歷資料</p>';
     }
     delete window[callbackName];
     const scriptEl = document.getElementById(callbackName);
@@ -446,7 +465,6 @@ function renderResumeDetails(r) {
   document.getElementById('m_phone').textContent = r['聯絡電話'] || '--';
   document.getElementById('m_email').textContent = r['E-mail'] || '--';
   document.getElementById('m_education').textContent = r['最高學歷(畢業/肄業)'] || r['最高學歷'] || '--';
-  document.getElementById('m_military').textContent = `${r['兵役狀況'] || ''} / ${r['婚姻狀況'] || ''}`;
   document.getElementById('m_address').textContent = r['聯絡地址'] || '--';
 
   const container = document.getElementById('dynamicFieldsContainer');
@@ -455,7 +473,7 @@ function renderResumeDetails(r) {
   const ignoredKeys = ['時間戳記', '機構運用', '活動資訊來源', '姓名', '出生日期', '身分證字號(居留證號)', '婚姻狀況', '兵役狀況', '聯絡地址', '聯絡電話', 'E-mail', '最高學歷(畢業/肄業)'];
 
   let hasExtra = false;
-  let extraHtml = '<div class="bg-slate-800/90 rounded-xl p-5 border border-purple-400/30 space-y-3"><h3 class="text-lg font-black text-cyan-300 border-b border-slate-700 pb-2">💼 工作經歷與自我推薦</h3><div class="space-y-3 text-sm sm:text-base">';
+  let extraHtml = '<div class="bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-purple-400/30 space-y-2.5"><h3 class="text-base font-black text-cyan-300 border-b border-slate-700 pb-1.5">💼 工作經歷與自我推薦</h3><div class="space-y-2.5 text-xs sm:text-sm">';
 
   for (let key in r) {
     if (!ignoredKeys.some(ik => key.includes(ik)) && r[key]) {
@@ -463,7 +481,7 @@ function renderResumeDetails(r) {
       extraHtml += `
         <div>
           <span class="text-amber-300 font-bold block mb-1">【${key}】：</span>
-          <div class="bg-slate-900/80 p-3 rounded-lg text-gray-200 whitespace-pre-wrap font-medium">${r[key]}</div>
+          <div class="bg-slate-900/80 p-2.5 rounded-lg text-gray-200 whitespace-pre-wrap font-medium">${r[key]}</div>
         </div>
       `;
     }
@@ -472,13 +490,18 @@ function renderResumeDetails(r) {
 
   if (hasExtra) {
     container.innerHTML = extraHtml;
-  } else {
-    container.innerHTML = '';
   }
 }
 
+// 狀態快速更新通知（面試中 / 等候中）
+function setCandidateStatus(idNo, status) {
+  const script = document.createElement('script');
+  script.src = `${SCRIPT_API_URL}?action=setInterviewStatus&company=${encodeURIComponent(currentCompany)}&idNo=${encodeURIComponent(idNo)}&status=${encodeURIComponent(status)}`;
+  document.body.appendChild(script);
+}
+
 /**
- * 5. 儲存面試評核資料
+ * 儲存面試資料
  */
 function submitEvaluation() {
   if (!activeCandidate) return;
@@ -487,22 +510,21 @@ function submitEvaluation() {
   const notes = document.getElementById('modalInterviewNotes').value.trim();
   const btn = document.getElementById('saveEvalBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spinner !w-5 !h-5 border-2"></span> 正在儲存...';
+  btn.innerHTML = '<span class="spinner !w-4 !h-4 border-2"></span> 正在儲存...';
 
   const callbackName = 'cb_saveEval_' + Date.now();
   window[callbackName] = function(res) {
     btn.disabled = false;
-    btn.innerHTML = '<span>儲存面試資料</span>';
+    btn.innerHTML = '儲存面試資料';
 
     if (res && res.success) {
       alert('✅ 面試紀錄與擬錄取結果已成功寫入試算表！');
-      // 更新前端狀態
       activeCandidate.isAccepted = isAccepted;
       activeCandidate.interviewNotes = notes;
       
-      // 重新渲染清單（該列將自動變為灰底）
-      renderCandidateTable();
-      closeModal();
+      renderCandidateCards();
+      document.getElementById('resumeModal').classList.add('hidden');
+      activeCandidate = null;
     } else {
       alert('❌ 儲存失敗：' + (res.message || '未知錯誤'));
     }
@@ -518,12 +540,21 @@ function submitEvaluation() {
 }
 
 function closeModal() {
+  if (activeCandidate) {
+    // 若未填寫紀錄直接取消返回，將狀態還原為等候中
+    if (!activeCandidate.interviewNotes || activeCandidate.interviewNotes === '面試中') {
+      setCandidateStatus(activeCandidate.idNo, '等候中');
+      activeCandidate.interviewNotes = '';
+    }
+  }
   document.getElementById('resumeModal').classList.add('hidden');
   activeCandidate = null;
+  renderCandidateCards();
 }
 
 function logout() {
   if (confirm('確定要登出廠商系統嗎？')) {
+    if (pollTimer) clearInterval(pollTimer);
     currentCompany = '';
     currentPin = '';
     currentCandidates = [];
