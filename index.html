@@ -36,6 +36,15 @@
     background-color: rgba(10, 9, 28, 0.82);
     backdrop-filter: blur(4px);
   }
+
+  /* 已面試/已編輯灰底樣式 */
+  .row-interviewed {
+    background-color: #E2E8F0 !important; /* 淺灰底 */
+    color: #475569 !important;
+  }
+  .row-interviewed:hover {
+    background-color: #CBD5E1 !important;
+  }
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -92,9 +101,9 @@
     <div class="space-y-1">
       <div class="flex items-center gap-3">
         <span class="px-3 py-1 bg-amber-400 text-slate-950 font-black rounded-lg text-sm sm:text-base">面試攤位</span>
-        <h1 id="currentCompanyName" class="text-2xl sm:text-3xl font-black text-white">01新悦花園酒店</h1>
+        <h1 id="currentCompanyName" class="text-2xl sm:text-3xl font-black text-white">--</h1>
       </div>
-      <p class="text-sm sm:text-base text-cyan-300 font-bold">點選求職者那一列即可檢視完整履歷並回填面試紀錄</p>
+      <p class="text-sm sm:text-base text-cyan-300 font-bold">💡 點選求職者「姓名」即可檢視完整履歷並回填面試紀錄；已面試完成者將以灰底標示。</p>
     </div>
     <div class="flex items-center gap-4">
       <div class="text-right">
@@ -107,20 +116,17 @@
     </div>
   </div>
 
-  <!-- 求職者表格卡片 -->
+  <!-- 求職者表格卡片（已移除序號、年齡、操作欄位） -->
   <div class="flex-1 bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col border-2 border-black">
     <div class="overflow-x-auto flex-1">
       <table class="w-full text-center border-collapse">
         <thead>
           <tr class="bg-amber-300 text-black font-black text-base sm:text-lg border-b-2 border-black">
-            <th class="py-3.5 px-3 border-r border-black w-16">序號</th>
-            <th class="py-3.5 px-4 border-r border-black">姓名</th>
-            <th class="py-3.5 px-4 border-r border-black">身分證字號</th>
-            <th class="py-3.5 px-3 border-r border-black w-24">年齡</th>
-            <th class="py-3.5 px-4 border-r border-black text-left">應徵職務</th>
-            <th class="py-3.5 px-3 border-r border-black w-28">擬錄取</th>
-            <th class="py-3.5 px-4 border-r border-black">面試紀錄狀態</th>
-            <th class="py-3.5 px-4">操作</th>
+            <th class="py-3.5 px-6 border-r border-black w-48 text-center">姓名（點選開啟履歷）</th>
+            <th class="py-3.5 px-6 border-r border-black w-44">身分證字號</th>
+            <th class="py-3.5 px-6 border-r border-black text-left">應徵職務</th>
+            <th class="py-3.5 px-4 border-r border-black w-36">擬錄取</th>
+            <th class="py-3.5 px-6 w-48">面試紀錄狀態</th>
           </tr>
         </thead>
         <tbody id="candidateTableBody" class="divide-y divide-gray-300 text-sm sm:text-base font-bold">
@@ -161,16 +167,16 @@
         </div>
       </div>
 
-      <!-- 額外履歷自傳/就業意向區 (由 a.求職登記表 其它欄位帶入) -->
+      <!-- 額外履歷自傳/就業意向區 -->
       <div id="dynamicFieldsContainer" class="space-y-4">
-        <!-- 動態帶出所有非空自傳/經歷欄位 -->
+        <!-- 動態帶出所有非空欄位 -->
       </div>
 
-      <!-- 🌟 面試過程紀錄與擬錄取回寫區塊 -->
+      <!-- 面試過程紀錄與擬錄取回寫區塊 -->
       <div class="bg-indigo-950/80 rounded-xl p-5 border-2 border-amber-300/80 space-y-4 shadow-xl">
         <div class="flex items-center justify-between border-b border-indigo-800 pb-2">
           <h3 class="text-lg sm:text-xl font-black text-amber-300">📝 廠商面試評核與回填</h3>
-          <span class="text-xs text-cyan-300 font-bold">送出後將直接寫入貴公司試算表</span>
+          <span class="text-xs text-cyan-300 font-bold">送出後將直接寫入貴公司試算表並標示為已面試</span>
         </div>
 
         <!-- 擬錄取 Checkbox -->
@@ -208,13 +214,13 @@
 </div>
 
 <script>
-// ⚠️ 請替換為您的 Apps Script Web App 部署網址
+// ⚠️ 請填入您的 Apps Script Web App 部署網址
 const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbz-uvu5D7GUznL_88E-jDbzNjrr4tgvzIIKUvkCMq0lZ7MUDjFNw7u5un2IqNRxkpZa/exec';
 
 let currentCompany = '';
 let currentPin = '';
 let currentCandidates = [];
-let activeCandidate = null; // 當前正被點開履歷的求職者
+let activeCandidate = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   loadCompanyList();
@@ -235,7 +241,6 @@ function loadCompanyList() {
         option.textContent = compName;
         selectElem.appendChild(option);
       });
-      // 網址參數預選
       const urlParams = new URLSearchParams(window.location.search);
       const companyParam = urlParams.get('company') ? decodeURIComponent(urlParams.get('company')).trim() : '';
       if (companyParam) {
@@ -296,7 +301,6 @@ function submitPinAuth() {
       currentPin = pinInput;
       currentCandidates = res.candidates || [];
       
-      // 跳轉至主系統畫面
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('appSection').classList.remove('hidden');
       document.getElementById('currentCompanyName').textContent = currentCompany;
@@ -319,6 +323,10 @@ function submitPinAuth() {
 
 /**
  * 3. 渲染廠商求職者名單列表
+ * - 已移除序號、年齡、操作
+ * - 身分證只呈現後 3 碼
+ * - 點選姓名開啟履歷
+ * - 編輯過（已填寫面試紀錄或擬錄取）該列變成灰底
  */
 function renderCandidateTable() {
   const tbody = document.getElementById('candidateTableBody');
@@ -326,61 +334,85 @@ function renderCandidateTable() {
   document.getElementById('candidateCountBadge').textContent = `${currentCandidates.length} 人`;
 
   if (currentCandidates.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-gray-500 font-bold text-lg">目前尚無預約或報到的求職者</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="py-12 text-gray-500 font-bold text-lg">目前尚無預約或報到的求職者</td></tr>`;
     return;
   }
 
-  currentCandidates.forEach((cand, idx) => {
+  currentCandidates.forEach((cand) => {
     const tr = document.createElement('tr');
-    tr.className = 'hover:bg-amber-50 cursor-pointer transition border-b border-gray-200';
-    tr.onclick = (e) => {
-      // 點擊整列直接開啟詳細履歷
-      openResumeModal(cand);
-    };
 
+    // 判斷是否已經面試/編輯過（有擬錄取或已填寫面試紀錄）
+    const isEdited = cand.isAccepted || (cand.interviewNotes && cand.interviewNotes.trim() !== '');
+
+    // 🌟 編輯過該列呈現灰底，未面試者維持純白底與 hover 效果
+    if (isEdited) {
+      tr.className = 'row-interviewed transition border-b border-gray-300';
+    } else {
+      tr.className = 'bg-white hover:bg-amber-50 transition border-b border-gray-200';
+    }
+
+    // 🌟 身分證字號只呈現後 3 碼
+    const last3Id = cand.idNo && cand.idNo.length >= 3 
+      ? '***' + cand.idNo.substring(cand.idNo.length - 3) 
+      : '***';
+
+    // 擬錄取標籤
     const isAcceptedBadge = cand.isAccepted 
-      ? '<span class="inline-block px-2.5 py-1 bg-green-600 text-white text-xs font-black rounded-full">✓ 擬錄取</span>' 
+      ? '<span class="inline-block px-3 py-1 bg-green-600 text-white text-xs font-black rounded-full shadow-sm">✓ 擬錄取</span>' 
       : '<span class="text-gray-400 text-xs font-bold">未標記</span>';
 
-    const notesStatus = cand.interviewNotes 
-      ? '<span class="text-blue-700 text-xs font-bold bg-blue-100 px-2 py-0.5 rounded truncate max-w-[140px] inline-block" title="' + cand.interviewNotes + '">已填寫</span>'
-      : '<span class="text-gray-400 text-xs">未填寫</span>';
-
-    // 身分證隱碼顯示（如 Q12***6789）
-    const maskedId = cand.idNo ? cand.idNo.substring(0, 3) + '***' + cand.idNo.substring(cand.idNo.length - 3) : '--';
+    // 面試紀錄狀態
+    const notesStatus = (cand.interviewNotes && cand.interviewNotes.trim() !== '')
+      ? '<span class="text-slate-700 text-xs font-bold bg-slate-300 px-2.5 py-1 rounded inline-block">已完成面試</span>'
+      : '<span class="text-amber-600 text-xs font-bold bg-amber-100 px-2.5 py-1 rounded inline-block">等候面試中</span>';
 
     tr.innerHTML = `
-      <td class="py-3 px-3 border-r border-gray-200 font-black text-gray-700">${idx + 1}</td>
-      <td class="py-3 px-4 border-r border-gray-200 text-blue-900 font-black text-lg">${cand.name}</td>
-      <td class="py-3 px-4 border-r border-gray-200 font-mono text-gray-700">${maskedId}</td>
-      <td class="py-3 px-3 border-r border-gray-200 text-gray-800">${cand.age ? cand.age + ' 歲' : '--'}</td>
-      <td class="py-3 px-4 border-r border-gray-200 text-left font-extrabold text-slate-800">${cand.jobTitle}</td>
-      <td class="py-3 px-3 border-r border-gray-200">${isAcceptedBadge}</td>
-      <td class="py-3 px-4 border-r border-gray-200">${notesStatus}</td>
-      <td class="py-3 px-4">
-        <button class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black rounded-lg transition shadow">
-          開啟履歷
+      <!-- 🌟 點選「姓名」即可開啟履歷表 -->
+      <td class="py-3.5 px-6 border-r border-gray-300 text-center">
+        <button 
+          onclick="openResumeModalByCandidate('${cand.idNo}')" 
+          class="text-blue-700 hover:text-blue-900 underline font-black text-lg sm:text-xl transition tracking-wide hover:scale-105 inline-block">
+          ${cand.name}
         </button>
+      </td>
+      <td class="py-3.5 px-6 border-r border-gray-300 font-mono tracking-wider font-bold text-base">
+        ${last3Id}
+      </td>
+      <td class="py-3.5 px-6 border-r border-gray-300 text-left font-extrabold text-slate-800 text-base">
+        ${cand.jobTitle}
+      </td>
+      <td class="py-3.5 px-4 border-r border-gray-300 text-center">
+        ${isAcceptedBadge}
+      </td>
+      <td class="py-3.5 px-6 text-center">
+        ${notesStatus}
       </td>
     `;
     tbody.appendChild(tr);
   });
 }
 
+function openResumeModalByCandidate(idNo) {
+  const cand = currentCandidates.find(c => c.idNo === idNo);
+  if (cand) {
+    openResumeModal(cand);
+  }
+}
+
 /**
- * 4. 點選求職者彈出完整履歷（從 a.求職登記表 抓取資料）
+ * 4. 彈出完整履歷
  */
 function openResumeModal(cand) {
   activeCandidate = cand;
   document.getElementById('modalCandidateName').textContent = cand.name;
   document.getElementById('modalJobTitle').textContent = cand.jobTitle;
   
-  // 填入目前試算表已存的面試狀態
   document.getElementById('modalIsAccepted').checked = cand.isAccepted;
   document.getElementById('modalInterviewNotes').value = cand.interviewNotes || '';
 
-  // 清空並顯示讀取中
-  document.getElementById('m_idNo').textContent = cand.idNo;
+  // 彈窗內部身分證字號顯示末 3 碼
+  const last3 = cand.idNo && cand.idNo.length >= 3 ? '***' + cand.idNo.substring(cand.idNo.length - 3) : '--';
+  document.getElementById('m_idNo').textContent = last3;
   document.getElementById('m_birthday').textContent = '讀取中...';
   document.getElementById('m_phone').textContent = '讀取中...';
   document.getElementById('m_email').textContent = '讀取中...';
@@ -391,13 +423,12 @@ function openResumeModal(cand) {
 
   document.getElementById('resumeModal').classList.remove('hidden');
 
-  // 發送請求向 a.求職登記表 比對身分證抓履歷
   const callbackName = 'cb_getResume_' + Date.now();
   window[callbackName] = function(res) {
     if (res && res.success && res.resume) {
       renderResumeDetails(res.resume);
     } else {
-      document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-amber-400 font-bold">⚠️ 求職登記表中未找到該身分證之詳細自傳與經歷資料</p>';
+      document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-amber-400 font-bold">⚠️ 求職登記表中未找到該求職者之詳細履歷資料</p>';
     }
     delete window[callbackName];
     const scriptEl = document.getElementById(callbackName);
@@ -410,9 +441,6 @@ function openResumeModal(cand) {
   document.body.appendChild(script);
 }
 
-/**
- * 渲染網頁版結構化履歷
- */
 function renderResumeDetails(r) {
   document.getElementById('m_birthday').textContent = r['出生日期'] || '--';
   document.getElementById('m_phone').textContent = r['聯絡電話'] || '--';
@@ -424,7 +452,6 @@ function renderResumeDetails(r) {
   const container = document.getElementById('dynamicFieldsContainer');
   container.innerHTML = '';
 
-  // 動態呈現其他工作經歷、自傳、證照專長等欄位
   const ignoredKeys = ['時間戳記', '機構運用', '活動資訊來源', '姓名', '出生日期', '身分證字號(居留證號)', '婚姻狀況', '兵役狀況', '聯絡地址', '聯絡電話', 'E-mail', '最高學歷(畢業/肄業)'];
 
   let hasExtra = false;
@@ -451,7 +478,7 @@ function renderResumeDetails(r) {
 }
 
 /**
- * 5. 廠商填寫完畢送出：回寫試算表指定的欄 F (是否錄取) 與 欄 G (面試紀錄)
+ * 5. 儲存面試評核資料
  */
 function submitEvaluation() {
   if (!activeCandidate) return;
@@ -469,9 +496,11 @@ function submitEvaluation() {
 
     if (res && res.success) {
       alert('✅ 面試紀錄與擬錄取結果已成功寫入試算表！');
-      // 即時更新前端陣列資料
+      // 更新前端狀態
       activeCandidate.isAccepted = isAccepted;
       activeCandidate.interviewNotes = notes;
+      
+      // 重新渲染清單（該列將自動變為灰底）
       renderCandidateTable();
       closeModal();
     } else {
