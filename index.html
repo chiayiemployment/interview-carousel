@@ -31,12 +31,10 @@
   .hidden { display: none !important; }
   .spinner { border: 4px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #28C4FF; width: 2.25rem; height: 2.25rem; animation: spin 1s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
   .modal-backdrop {
     background-color: rgba(10, 9, 28, 0.85);
     backdrop-filter: blur(5px);
   }
-
   /* 卡片樣式 1：等候中 (高亮白底) */
   .candidate-card-pending {
     background-color: #FFFFFF;
@@ -48,7 +46,6 @@
     border-color: #FACC15;
     transform: translateY(-2px);
   }
-
   /* 卡片樣式 2：面試中 (淺橘底) */
   .candidate-card-interviewing {
     background-color: #FFF7ED;
@@ -56,7 +53,6 @@
     border: 2px solid #FB923C;
     box-shadow: 0 0 12px rgba(251, 146, 60, 0.35);
   }
-
   /* 卡片樣式 3：已完成面試 (灰底靜音狀態) */
   .candidate-card-completed {
     background-color: #E2E8F0;
@@ -67,7 +63,6 @@
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
-
 <!-- ==================== 1. 廠商身分驗證登入畫面 ==================== -->
 <div id="loginSection" class="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-12">
   <div class="form-container p-6 sm:p-10 md:p-12 max-w-xl w-full text-center space-y-6">
@@ -76,7 +71,6 @@
       <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-wide">嘉義就業中心</div>
       <div class="text-2xl sm:text-3xl font-black text-amber-300 pt-1">廠商面試管理系統</div>
     </div>
-
     <div id="authBox" class="space-y-5 pt-2">
       <div class="text-left space-y-2">
         <label for="companySelect" class="text-lg font-bold text-purple-200 block">請選擇公司名稱</label>
@@ -84,7 +78,6 @@
           <option value="" disabled selected>載入廠商清單中...</option>
         </select>
       </div>
-
       <div class="text-left space-y-2">
         <label for="pinInput" class="text-lg font-bold text-purple-200 block">請輸入 8 位數密碼</label>
         <input 
@@ -95,12 +88,10 @@
           onkeypress="handleKeyPress(event)"
           class="w-full text-center text-2xl tracking-widest py-3 font-bold rounded-xl border-2 border-cyan-400 focus:outline-none focus:border-amber-300 transition">
       </div>
-
       <button onclick="submitPinAuth()" id="loginBtn" class="submit-btn w-full py-4 text-xl font-bold shadow-xl hover:opacity-95 transition mt-3">
         進入面試管理清單
       </button>
     </div>
-
     <div id="loadingBox" class="hidden py-8 space-y-4">
       <span class="spinner"></span>
       <p id="loadingStatusText" class="text-xl font-bold text-cyan-300">正在驗證密碼並載入面試名單...</p>
@@ -126,7 +117,7 @@
     </div>
     
     <div class="flex items-center justify-between text-xs sm:text-sm text-cyan-200 font-medium pt-2 border-t border-slate-800 flex-wrap gap-2">
-      <span>💡 每 5 秒自動同步進度。</span>
+      <span id="syncNotice">💡 每 4 秒自動同步進度。</span>
       <div class="flex items-center gap-3">
         <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-orange-500 rounded-full inline-block"></span> 橘色為他人面試中</span>
         <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-slate-400 rounded-full inline-block"></span> 灰底為已面試</span>
@@ -149,7 +140,6 @@
       </div>
       <button onclick="closeModal()" class="text-gray-300 hover:text-white text-3xl font-bold leading-none p-1">&times;</button>
     </div>
-
     <div class="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 text-slate-100" id="modalResumeBody">
       <div class="bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-purple-400/30 space-y-3">
         <h3 class="text-base font-black text-cyan-300 border-b border-slate-700 pb-1.5">📋 基本資料</h3>
@@ -161,19 +151,17 @@
           <div class="col-span-2"><span class="text-gray-400">通訊地址：</span><span id="m_address" class="font-bold">--</span></div>
         </div>
       </div>
-
       <div id="dynamicFieldsContainer" class="space-y-3"></div>
 
-      <!-- 🌟 面試過程紀錄與【擬錄取 / 不錄取】互斥選取區塊 -->
+      <!-- 面試過程紀錄與【擬錄取 / 不錄取】互斥選取區塊 -->
       <div class="bg-indigo-950/90 rounded-xl p-4 sm:p-5 border-2 border-amber-300 space-y-3.5 shadow-xl">
         <div class="flex items-center justify-between border-b border-indigo-800 pb-1.5">
           <h3 class="text-base sm:text-lg font-black text-amber-300">📝 廠商面試紀錄填寫</h3>
           <span class="text-xs text-amber-200 font-bold">⚠️ 錄取結果為必選項目</span>
         </div>
-
+        
         <!-- 錄取結果核取選單 (二選一互斥防呆) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <!-- 1. 擬錄取 -->
           <label class="flex items-center gap-3 bg-slate-900/90 p-3 rounded-xl border-2 border-green-500/60 hover:border-green-400 cursor-pointer transition select-none">
             <input 
               type="checkbox" 
@@ -184,8 +172,6 @@
               ⭐ 擬錄取此求職者
             </span>
           </label>
-
-          <!-- 2. 不錄取 -->
           <label class="flex items-center gap-3 bg-slate-900/90 p-3 rounded-xl border-2 border-rose-500/60 hover:border-rose-400 cursor-pointer transition select-none">
             <input 
               type="checkbox" 
@@ -198,7 +184,7 @@
           </label>
         </div>
 
-        <!-- 面試過程紀錄輸入框 -->
+        <!-- 面試紀錄輸入框 -->
         <div class="space-y-1.5 pt-1">
           <label for="modalInterviewNotes" class="text-xs sm:text-sm font-bold text-purple-200 block">
             面試紀錄：
@@ -227,7 +213,6 @@
 <script>
 // ⚠️ 請填入您的 Apps Script Web App 部署網址
 const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbxJudcf8iSdz6puCsjYpDmSdCvnaeUtJWyzd0Zu8Z8jAH55hNiTiWLE1NK-So_EtpE4/exec';
-
 let currentCompany = '';
 let currentPin = '';
 let currentCandidates = [];
@@ -265,7 +250,6 @@ function loadCompanyList() {
     const scriptEl = document.getElementById(callbackName);
     if (scriptEl) scriptEl.remove();
   };
-
   const script = document.createElement('script');
   script.id = callbackName;
   script.src = `${SCRIPT_API_URL}?action=getCompanyList&callback=${callbackName}`;
@@ -283,12 +267,10 @@ function submitPinAuth() {
   const selectElem = document.getElementById('companySelect');
   const selectedCompany = selectElem.value;
   const pinInput = document.getElementById('pinInput').value.trim();
-
   if (!selectedCompany || pinInput.length !== 8) {
     alert('請選擇公司並輸入完整的 8 位數密碼！');
     return;
   }
-
   const authBox = document.getElementById('authBox');
   const loadingBox = document.getElementById('loadingBox');
   authBox.classList.add('hidden');
@@ -304,7 +286,6 @@ function submitPinAuth() {
       document.getElementById('appSection').classList.remove('hidden');
       document.getElementById('currentCompanyName').textContent = currentCompany;
       renderCandidateCards();
-
       startPolling();
     } else {
       alert(res.message || '🔒 密碼錯誤！請輸入貴公司專屬的 8 位數密碼。');
@@ -317,24 +298,21 @@ function submitPinAuth() {
 function fetchCandidateList(comp, pin, callback) {
   const callbackName = 'cb_fetch_' + Date.now();
   let isHandled = false;
-
   const timeoutTimer = setTimeout(() => {
     if (!isHandled) {
       isHandled = true;
       delete window[callbackName];
       const el = document.getElementById(callbackName);
       if (el) el.remove();
-      alert('連線逾時！請檢查 Apps Script 是否已重新發布新版本。');
-      document.getElementById('authBox').classList.remove('hidden');
-      document.getElementById('loadingBox').classList.add('hidden');
+      if (callback) callback(null);
     }
-  }, 10000);
+  }, 8000);
 
   window[callbackName] = function(res) {
     if (isHandled) return;
     isHandled = true;
     clearTimeout(timeoutTimer);
-    callback(res);
+    if (callback) callback(res);
     delete window[callbackName];
     const scriptEl = document.getElementById(callbackName);
     if (scriptEl) scriptEl.remove();
@@ -348,18 +326,16 @@ function fetchCandidateList(comp, pin, callback) {
     if (isHandled) return;
     isHandled = true;
     clearTimeout(timeoutTimer);
-    alert('連線失敗！請確認 SCRIPT_API_URL 是否正確且已發布為所有人皆可存取。');
-    document.getElementById('authBox').classList.remove('hidden');
-    document.getElementById('loadingBox').classList.add('hidden');
+    if (callback) callback(null);
     delete window[callbackName];
     script.remove();
   };
-
   document.body.appendChild(script);
 }
 
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
+  // 調為 4 秒一次輪詢
   pollTimer = setInterval(() => {
     if (!activeCandidate && currentCompany && currentPin) {
       fetchCandidateList(currentCompany, currentPin, (res) => {
@@ -369,7 +345,7 @@ function startPolling() {
         }
       });
     }
-  }, 5000);
+  }, 4000);
 }
 
 /**
@@ -379,7 +355,6 @@ function renderCandidateCards() {
   const container = document.getElementById('candidateCardsContainer');
   container.innerHTML = '';
   document.getElementById('candidateCountBadge').textContent = `應徵總數：${currentCandidates.length} 人`;
-
   if (currentCandidates.length === 0) {
     container.innerHTML = `
       <div class="bg-slate-900/80 border border-slate-700 rounded-2xl py-12 text-center text-gray-400 font-bold">
@@ -391,47 +366,43 @@ function renderCandidateCards() {
 
   currentCandidates.forEach((cand) => {
     const rawNotes = (cand.interviewNotes || '').trim();
+    const rawDecision = (cand.rawDecision || '').trim();
     
-    // 判斷是否已完成面試（有擬錄取，或已填寫非「面試中」的評語）
-    const isCompleted = cand.isAccepted || (rawNotes !== '' && rawNotes !== '面試中');
+    // 判斷是否已完成面試（欄 F 為擬錄取/不錄取，或已填寫非「面試中」的評語）
+    const isCompleted = cand.isAccepted || rawDecision === '不錄取' || (rawNotes !== '' && rawNotes !== '面試中');
     const isInterviewing = !isCompleted && rawNotes === '面試中';
-
+    
     const id3Digits = cand.idNo && cand.idNo.length >= 3 
       ? cand.idNo.substring(cand.idNo.length - 3) 
       : (cand.idNo || '--');
 
     let cardClass = '';
     let statusBadge = '';
-
     if (isCompleted) {
       cardClass = 'candidate-card-completed cursor-pointer';
       statusBadge = '<span class="px-2.5 py-1 bg-slate-400 text-slate-900 text-xs font-black rounded-lg">已完成面試</span>';
     } else if (isInterviewing) {
       cardClass = 'candidate-card-interviewing cursor-pointer';
-      statusBadge = '<span class="px-2.5 py-1 bg-orange-500 text-white text-xs font-black rounded-lg animate-pulse shadow">⚠️ 面試中</span>';
+      statusBadge = '<span class="px-2.5 py-1 bg-orange-500 text-white text-xs font-black rounded-lg animate-pulse shadow">⚠️ 他人面試中</span>';
     } else {
       cardClass = 'candidate-card-pending cursor-pointer';
       statusBadge = '<span class="px-2.5 py-1 bg-amber-100 text-amber-800 text-xs font-black rounded-lg border border-amber-300">等候面試中</span>';
     }
 
-    // 🌟 錄取狀態徽章：擬錄取 (綠色) vs 不錄取 (玫瑰紅)
+    // 錄取狀態徽章
     let decisionBadge = '';
-    if (cand.isAccepted) {
+    if (cand.isAccepted || rawDecision === '擬錄取') {
       decisionBadge = '<span class="px-2.5 py-1 bg-green-600 text-white text-xs font-black rounded-lg shadow-sm">✓ 擬錄取</span>';
-    } else if (isCompleted) {
+    } else if (rawDecision === '不錄取' || isCompleted) {
       decisionBadge = '<span class="px-2.5 py-1 bg-rose-600 text-white text-xs font-black rounded-lg shadow-sm">✗ 不錄取</span>';
     }
 
     const card = document.createElement('div');
     card.className = `${cardClass} rounded-2xl p-4 transition duration-200 flex items-center justify-between gap-3`;
     
+    // 點擊卡片前，強制再驗證當下狀態
     card.onclick = () => {
-      if (isInterviewing) {
-        if (!confirm('⚠️ 另一位人資可能正在面試該求職者，確定要進入檢視嗎？')) {
-          return;
-        }
-      }
-      openResumeModal(cand);
+      handleCandidateClick(cand);
     };
 
     card.innerHTML = `
@@ -448,7 +419,6 @@ function renderCandidateCards() {
           ${cand.jobTitle}
         </div>
       </div>
-
       <div class="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
         <div class="flex items-center gap-1.5 flex-wrap justify-end">
           ${decisionBadge}
@@ -456,18 +426,34 @@ function renderCandidateCards() {
         </div>
       </div>
     `;
-
     container.appendChild(card);
   });
 }
 
 /**
- * 🌟 處理「擬錄取」與「不錄取」的互斥防呆
+ * 處理卡片點擊：若處於面試中主動跳出警示
+ */
+function handleCandidateClick(cand) {
+  const currentCandidateInList = currentCandidates.find(c => c.idNo === cand.idNo) || cand;
+  const rawNotes = (currentCandidateInList.interviewNotes || '').trim();
+  const rawDecision = (currentCandidateInList.rawDecision || '').trim();
+  const isCompleted = currentCandidateInList.isAccepted || rawDecision === '不錄取' || (rawNotes !== '' && rawNotes !== '面試中');
+  const isInterviewing = !isCompleted && rawNotes === '面試中';
+
+  if (isInterviewing) {
+    if (!confirm(`⚠️ 提示：此求職者【${currentCandidateInList.name}】目前另一位面試官顯示「面試中」，確定要同時開啟檢視嗎？`)) {
+      return;
+    }
+  }
+  openResumeModal(currentCandidateInList);
+}
+
+/**
+ * 處理「擬錄取」與「不錄取」的互斥防呆
  */
 function handleDecisionChange(type) {
   const acceptBox = document.getElementById('modalIsAccepted');
   const rejectBox = document.getElementById('modalIsRejected');
-
   if (type === 'accept' && acceptBox.checked) {
     rejectBox.checked = false;
   } else if (type === 'reject' && rejectBox.checked) {
@@ -484,35 +470,32 @@ function openResumeModal(cand) {
   document.getElementById('modalJobTitle').textContent = cand.jobTitle;
   
   const rawNotes = (cand.interviewNotes || '').trim();
-  const isCompleted = cand.isAccepted || (rawNotes !== '' && rawNotes !== '面試中');
+  const rawDecision = (cand.rawDecision || '').trim();
+  const isCompleted = cand.isAccepted || rawDecision === '不錄取' || (rawNotes !== '' && rawNotes !== '面試中');
 
-  // 🌟 初始化勾選狀態
-  if (cand.isAccepted) {
+  // 初始化勾選狀態
+  if (cand.isAccepted || rawDecision === '擬錄取') {
     document.getElementById('modalIsAccepted').checked = true;
     document.getElementById('modalIsRejected').checked = false;
-  } else if (isCompleted) {
+  } else if (rawDecision === '不錄取' || isCompleted) {
     document.getElementById('modalIsAccepted').checked = false;
     document.getElementById('modalIsRejected').checked = true;
   } else {
-    // 未面試過，兩者皆預設不勾
     document.getElementById('modalIsAccepted').checked = false;
     document.getElementById('modalIsRejected').checked = false;
   }
 
   document.getElementById('modalInterviewNotes').value = (rawNotes === '面試中') ? '' : rawNotes;
-
   const id3Digits = cand.idNo && cand.idNo.length >= 3 ? cand.idNo.substring(cand.idNo.length - 3) : (cand.idNo || '--');
   document.getElementById('m_idNo').textContent = id3Digits;
-
   document.getElementById('m_birthday').textContent = '讀取中...';
   document.getElementById('m_phone').textContent = '讀取中...';
   document.getElementById('m_email').textContent = '讀取中...';
-  document.getElementById('m_education').textContent = '讀取中...';
   document.getElementById('m_address').textContent = '讀取中...';
   document.getElementById('dynamicFieldsContainer').innerHTML = '<div class="py-4 text-center text-cyan-300 font-bold"><span class="spinner"></span> 正在載入完整履歷資料...</div>';
-
   document.getElementById('resumeModal').classList.remove('hidden');
 
+  // 將求職者標記為「面試中」
   setCandidateStatus(cand.idNo, '面試中');
 
   const callbackName = 'cb_getResume_' + Date.now();
@@ -526,7 +509,6 @@ function openResumeModal(cand) {
     const scriptEl = document.getElementById(callbackName);
     if (scriptEl) scriptEl.remove();
   };
-
   const script = document.createElement('script');
   script.id = callbackName;
   script.src = `${SCRIPT_API_URL}?action=getResumeDetail&idNo=${encodeURIComponent(cand.idNo)}&callback=${callbackName}`;
@@ -537,17 +519,13 @@ function renderResumeDetails(r) {
   document.getElementById('m_birthday').textContent = r['出生日期'] || '--';
   document.getElementById('m_phone').textContent = r['聯絡電話'] || '--';
   document.getElementById('m_email').textContent = r['E-mail'] || '--';
-  document.getElementById('m_education').textContent = r['最高學歷(畢業/肄業)'] || r['最高學歷'] || '--';
   document.getElementById('m_address').textContent = r['聯絡地址'] || '--';
-
+  
   const container = document.getElementById('dynamicFieldsContainer');
   container.innerHTML = '';
-
-  const ignoredKeys = ['時間戳記', '機構運用', '活動資訊來源', '姓名', '出生日期', '身分證字號(居留證號)', '婚姻狀況', '兵役狀況', '聯絡地址', '聯絡電話', 'E-mail', '最高學歷(畢業/肄業)'];
-
+  const ignoredKeys = ['時間戳記', '機構運用', '活動資訊來源', '姓名', '出生日期', '身分證字號(居留證號)', '婚姻狀況', '兵役狀況', '聯絡地址', '聯絡電話', 'E-mail'];
   let hasExtra = false;
-  let extraHtml = '<div class="bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-purple-400/30 space-y-2.5"><h3 class="text-base font-black text-cyan-300 border-b border-slate-700 pb-1.5">💼 工作經歷與自我推薦</h3><div class="space-y-2.5 text-xs sm:text-sm">';
-
+  let extraHtml = '<div class="bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-purple-400/30 space-y-2.5"><h3 class="text-base font-black text-cyan-300 border-b border-slate-700 pb-1.5">💼 履歷詳細資訊</h3><div class="space-y-2.5 text-xs sm:text-sm">';
   for (let key in r) {
     if (!ignoredKeys.some(ik => key.includes(ik)) && r[key]) {
       hasExtra = true;
@@ -560,7 +538,6 @@ function renderResumeDetails(r) {
     }
   }
   extraHtml += '</div></div>';
-
   if (hasExtra) {
     container.innerHTML = extraHtml;
   }
@@ -573,15 +550,13 @@ function setCandidateStatus(idNo, status) {
 }
 
 /**
- * 🌟 儲存面試資料：強制驗證「擬錄取」或「不錄取」必須至少勾選一項
+ * 儲存面試資料
  */
 function submitEvaluation() {
   if (!activeCandidate) return;
-
   const isAccepted = document.getElementById('modalIsAccepted').checked;
   const isRejected = document.getElementById('modalIsRejected').checked;
 
-  // ⚠️ 防呆檢查：若兩者皆未打勾，禁止送出並提示
   if (!isAccepted && !isRejected) {
     alert('⚠️ 請選擇面試結果：「擬錄取」或「不錄取」，至少需勾選一項才能儲存！');
     return;
@@ -596,11 +571,11 @@ function submitEvaluation() {
   window[callbackName] = function(res) {
     btn.disabled = false;
     btn.innerHTML = '儲存面試資料';
-
     if (res && res.success) {
       alert('✅ 面試紀錄已成功儲存！');
       activeCandidate.isAccepted = isAccepted;
-      activeCandidate.interviewNotes = notes || (isAccepted ? '擬錄取' : '不錄取');
+      activeCandidate.rawDecision = isAccepted ? '擬錄取' : '不錄取';
+      activeCandidate.interviewNotes = notes;
       
       renderCandidateCards();
       document.getElementById('resumeModal').classList.add('hidden');
