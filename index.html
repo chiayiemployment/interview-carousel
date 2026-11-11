@@ -600,7 +600,7 @@ function submitEvaluation() {
     btn.innerHTML = '儲存面試資料';
 
     if (res && res.success) {
-      alert('✅ 面試紀錄已成功寫入試算表！');
+      alert('✅ 面試紀錄已成功儲存！');
       activeCandidate.isAccepted = isAccepted;
       activeCandidate.interviewNotes = notes || (isAccepted ? '擬錄取' : '不錄取');
       
