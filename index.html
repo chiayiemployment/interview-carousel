@@ -116,7 +116,6 @@
     <div class="flex items-start justify-between gap-3">
       <div>
         <div class="flex items-center gap-2 mb-1">
-          <span class="px-2.5 py-0.5 bg-amber-400 text-slate-950 font-black rounded text-xs sm:text-sm">面試攤位</span>
           <span id="candidateCountBadge" class="text-xs sm:text-sm font-bold text-cyan-300 bg-slate-800 px-2 py-0.5 rounded border border-cyan-400/30">應徵總數：0 人</span>
         </div>
         <h1 id="currentCompanyName" class="text-xl sm:text-2xl font-black text-white tracking-wide">--</h1>
@@ -127,7 +126,7 @@
     </div>
     
     <div class="flex items-center justify-between text-xs sm:text-sm text-cyan-200 font-medium pt-2 border-t border-slate-800 flex-wrap gap-2">
-      <span>💡 點選求職者卡片即可開啟履歷；每 5 秒自動同步多位人資進度。</span>
+      <span>💡 每 5 秒自動同步進度。</span>
       <div class="flex items-center gap-3">
         <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-orange-500 rounded-full inline-block"></span> 橘色為他人面試中</span>
         <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 bg-slate-400 rounded-full inline-block"></span> 灰底為已面試</span>
@@ -169,7 +168,7 @@
       <!-- 🌟 面試過程紀錄與【擬錄取 / 不錄取】互斥選取區塊 -->
       <div class="bg-indigo-950/90 rounded-xl p-4 sm:p-5 border-2 border-amber-300 space-y-3.5 shadow-xl">
         <div class="flex items-center justify-between border-b border-indigo-800 pb-1.5">
-          <h3 class="text-base sm:text-lg font-black text-amber-300">📝 廠商面試評核回填</h3>
+          <h3 class="text-base sm:text-lg font-black text-amber-300">📝 廠商面試紀錄填寫</h3>
           <span class="text-xs text-amber-200 font-bold">⚠️ 錄取結果為必選項目</span>
         </div>
 
@@ -203,12 +202,12 @@
         <!-- 面試過程紀錄輸入框 -->
         <div class="space-y-1.5 pt-1">
           <label for="modalInterviewNotes" class="text-xs sm:text-sm font-bold text-purple-200 block">
-            面試過程 / 評語備註（寫入【面試紀錄】欄位）：
+            面試紀錄：
           </label>
           <textarea 
             id="modalInterviewNotes" 
             rows="3" 
-            placeholder="請輸入面試狀況、專業能力評估、期望待遇協商等紀錄..." 
+            placeholder="請輸入面試情形、專業能力評估、期望待遇協商等紀錄..." 
             class="w-full bg-slate-900 border-2 border-purple-400/60 rounded-xl p-3 text-white font-medium focus:outline-none focus:border-amber-300 transition text-sm"></textarea>
         </div>
       </div>
