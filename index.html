@@ -133,77 +133,85 @@
 <div id="resumeModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
   <div class="bg-slate-900 border-2 border-cyan-400 rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-white my-auto">
     
-    <div class="bg-gradient-to-r from-purple-900 to-indigo-900 px-5 py-3.5 flex items-center justify-between border-b border-cyan-400/40">
-      <div class="flex items-center gap-2.5">
-        <span class="text-xl sm:text-2xl font-black text-amber-300" id="modalCandidateName">求職者姓名</span>
-        <span class="text-xs bg-cyan-600 px-2.5 py-0.5 rounded-full font-bold" id="modalJobTitle">應徵職務</span>
+    <!-- Modal 頂部標題列 -->
+    <div class="bg-gradient-to-r from-purple-900 to-indigo-900 px-5 py-4 flex items-center justify-between border-b border-cyan-400/40">
+      <div class="flex items-center gap-3">
+        <span class="text-2xl sm:text-3xl font-black text-amber-300 tracking-wide" id="modalCandidateName">求職者姓名</span>
+        <span class="text-sm sm:text-base bg-cyan-600 px-3 py-1 rounded-full font-bold shadow-sm" id="modalJobTitle">應徵職務</span>
       </div>
       <button onclick="closeModal()" class="text-gray-300 hover:text-white text-3xl font-bold leading-none p-1">&times;</button>
     </div>
-    <div class="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1 text-slate-100" id="modalResumeBody">
-      <div class="bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-purple-400/30 space-y-3">
-        <h3 class="text-base font-black text-cyan-300 border-b border-slate-700 pb-1.5">📋 基本資料</h3>
-        <div class="grid grid-cols-2 gap-3 text-xs sm:text-sm">
-          <div><span class="text-gray-400">身分證末3碼：</span><span id="m_idNo" class="font-bold text-amber-300 font-mono text-sm">--</span></div>
-          <div><span class="text-gray-400">出生日期：</span><span id="m_birthday" class="font-bold">--</span></div>
-          <div><span class="text-gray-400">聯絡電話：</span><span id="m_phone" class="font-bold">--</span></div>
-          <div class="col-span-2"><span class="text-gray-400">電子信箱：</span><span id="m_email" class="font-bold">--</span></div>
-          <div class="col-span-2"><span class="text-gray-400">通訊地址：</span><span id="m_address" class="font-bold">--</span></div>
+
+    <!-- Modal 內部資料主體 (文字放大) -->
+    <div class="p-4 sm:p-6 space-y-6 overflow-y-auto flex-1 text-slate-100" id="modalResumeBody">
+      
+      <!-- 📋 基本資料區塊 -->
+      <div class="bg-slate-800/95 rounded-xl p-4 sm:p-6 border border-purple-400/40 space-y-4">
+        <h3 class="text-lg sm:text-xl font-black text-cyan-300 border-b border-slate-700 pb-2">📋 基本資料</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base sm:text-lg">
+          <div><span class="text-gray-300 font-medium">身分證末3碼：</span><span id="m_idNo" class="font-extrabold text-amber-300 font-mono text-xl sm:text-2xl">--</span></div>
+          <div><span class="text-gray-300 font-medium">出生日期：</span><span id="m_birthday" class="font-bold text-white">--</span></div>
+          <div><span class="text-gray-300 font-medium">聯絡電話：</span><span id="m_phone" class="font-bold text-white">--</span></div>
+          <div><span class="text-gray-300 font-medium">最高學歷：</span><span id="m_education" class="font-bold text-white">--</span></div>
+          <div class="col-span-1 sm:col-span-2"><span class="text-gray-300 font-medium">電子信箱：</span><span id="m_email" class="font-bold text-white break-all">--</span></div>
+          <div class="col-span-1 sm:col-span-2"><span class="text-gray-300 font-medium">通訊地址：</span><span id="m_address" class="font-bold text-white leading-relaxed">--</span></div>
         </div>
       </div>
-      <div id="dynamicFieldsContainer" class="space-y-3"></div>
 
-      <!-- 面試過程紀錄與【擬錄取 / 不錄取】互斥選取區塊 -->
-      <div class="bg-indigo-950/90 rounded-xl p-4 sm:p-5 border-2 border-amber-300 space-y-3.5 shadow-xl">
-        <div class="flex items-center justify-between border-b border-indigo-800 pb-1.5">
-          <h3 class="text-base sm:text-lg font-black text-amber-300">📝 廠商面試紀錄填寫</h3>
-          <span class="text-xs text-amber-200 font-bold">⚠️ 錄取結果為必選項目</span>
+      <!-- 動態載入的工作經歷與自薦等欄位 -->
+      <div id="dynamicFieldsContainer" class="space-y-4"></div>
+
+      <!-- 📝 廠商面試評核回填區塊 -->
+      <div class="bg-indigo-950/90 rounded-xl p-4 sm:p-6 border-2 border-amber-300 space-y-4 shadow-xl">
+        <div class="flex items-center justify-between border-b border-indigo-800 pb-2">
+          <h3 class="text-lg sm:text-xl font-black text-amber-300">📝 廠商面試紀錄填寫</h3>
+          <span class="text-sm text-amber-200 font-bold">⚠️ 錄取結果為必選項目</span>
         </div>
         
         <!-- 錄取結果核取選單 (二選一互斥防呆) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label class="flex items-center gap-3 bg-slate-900/90 p-3 rounded-xl border-2 border-green-500/60 hover:border-green-400 cursor-pointer transition select-none">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <label class="flex items-center gap-3.5 bg-slate-900/90 p-4 rounded-xl border-2 border-green-500/60 hover:border-green-400 cursor-pointer transition select-none">
             <input 
               type="checkbox" 
               id="modalIsAccepted" 
               onchange="handleDecisionChange('accept')" 
-              class="w-5 h-5 text-green-500 rounded focus:ring-2 focus:ring-green-400 cursor-pointer">
-            <span class="text-sm sm:text-base font-black text-green-300">
+              class="w-6 h-6 text-green-500 rounded focus:ring-2 focus:ring-green-400 cursor-pointer">
+            <span class="text-base sm:text-lg font-black text-green-300">
               ⭐ 擬錄取此求職者
             </span>
           </label>
-          <label class="flex items-center gap-3 bg-slate-900/90 p-3 rounded-xl border-2 border-rose-500/60 hover:border-rose-400 cursor-pointer transition select-none">
+          <label class="flex items-center gap-3.5 bg-slate-900/90 p-4 rounded-xl border-2 border-rose-500/60 hover:border-rose-400 cursor-pointer transition select-none">
             <input 
               type="checkbox" 
               id="modalIsRejected" 
               onchange="handleDecisionChange('reject')" 
-              class="w-5 h-5 text-rose-500 rounded focus:ring-2 focus:ring-rose-400 cursor-pointer">
-            <span class="text-sm sm:text-base font-black text-rose-300">
+              class="w-6 h-6 text-rose-500 rounded focus:ring-2 focus:ring-rose-400 cursor-pointer">
+            <span class="text-base sm:text-lg font-black text-rose-300">
               ❌ 不錄取
             </span>
           </label>
         </div>
 
         <!-- 面試紀錄輸入框 -->
-        <div class="space-y-1.5 pt-1">
-          <label for="modalInterviewNotes" class="text-xs sm:text-sm font-bold text-purple-200 block">
+        <div class="space-y-2 pt-1">
+          <label for="modalInterviewNotes" class="text-base sm:text-lg font-bold text-purple-200 block">
             面試紀錄：
           </label>
           <textarea 
             id="modalInterviewNotes" 
             rows="3" 
             placeholder="請輸入面試情形、專業能力評估、期望待遇協商等紀錄..." 
-            class="w-full bg-slate-900 border-2 border-purple-400/60 rounded-xl p-3 text-white font-medium focus:outline-none focus:border-amber-300 transition text-sm"></textarea>
+            class="w-full bg-slate-900 border-2 border-purple-400/60 rounded-xl p-3.5 text-white font-medium focus:outline-none focus:border-amber-300 transition text-base leading-relaxed"></textarea>
         </div>
       </div>
     </div>
 
     <!-- Modal 底部按鈕列 -->
-    <div class="bg-slate-950 px-5 py-3 flex items-center justify-end gap-3 border-t border-slate-800">
-      <button onclick="closeModal()" class="px-4 py-2 rounded-lg border border-gray-500 text-gray-300 hover:text-white font-bold text-sm transition">
+    <div class="bg-slate-950 px-5 py-4 flex items-center justify-end gap-3.5 border-t border-slate-800">
+      <button onclick="closeModal()" class="px-5 py-2.5 rounded-lg border border-gray-500 text-gray-200 hover:text-white font-bold text-base transition">
         取消返回
       </button>
-      <button onclick="submitEvaluation()" id="saveEvalBtn" class="px-6 py-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-lg text-sm sm:text-base shadow-lg transition">
+      <button onclick="submitEvaluation()" id="saveEvalBtn" class="px-7 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black rounded-lg text-base sm:text-lg shadow-lg transition">
         儲存面試資料
       </button>
     </div>
@@ -335,7 +343,6 @@ function fetchCandidateList(comp, pin, callback) {
 
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
-  // 調為 4 秒一次輪詢
   pollTimer = setInterval(() => {
     if (!activeCandidate && currentCompany && currentPin) {
       fetchCandidateList(currentCompany, currentPin, (res) => {
@@ -368,7 +375,6 @@ function renderCandidateCards() {
     const rawNotes = (cand.interviewNotes || '').trim();
     const rawDecision = (cand.rawDecision || '').trim();
     
-    // 判斷是否已完成面試（欄 F 為擬錄取/不錄取，或已填寫非「面試中」的評語）
     const isCompleted = cand.isAccepted || rawDecision === '不錄取' || (rawNotes !== '' && rawNotes !== '面試中');
     const isInterviewing = !isCompleted && rawNotes === '面試中';
     
@@ -400,7 +406,6 @@ function renderCandidateCards() {
     const card = document.createElement('div');
     card.className = `${cardClass} rounded-2xl p-4 transition duration-200 flex items-center justify-between gap-3`;
     
-    // 點擊卡片前，強制再驗證當下狀態
     card.onclick = () => {
       handleCandidateClick(cand);
     };
@@ -431,7 +436,7 @@ function renderCandidateCards() {
 }
 
 /**
- * 處理卡片點擊：若處於面試中主動跳出警示
+ * 處理卡片點擊
  */
 function handleCandidateClick(cand) {
   const currentCandidateInList = currentCandidates.find(c => c.idNo === cand.idNo) || cand;
@@ -491,11 +496,11 @@ function openResumeModal(cand) {
   document.getElementById('m_birthday').textContent = '讀取中...';
   document.getElementById('m_phone').textContent = '讀取中...';
   document.getElementById('m_email').textContent = '讀取中...';
+  document.getElementById('m_education').textContent = '讀取中...';
   document.getElementById('m_address').textContent = '讀取中...';
-  document.getElementById('dynamicFieldsContainer').innerHTML = '<div class="py-4 text-center text-cyan-300 font-bold"><span class="spinner"></span> 正在載入完整履歷資料...</div>';
+  document.getElementById('dynamicFieldsContainer').innerHTML = '<div class="py-6 text-center text-cyan-300 font-bold text-base sm:text-lg"><span class="spinner"></span> 正在載入完整履歷資料...</div>';
   document.getElementById('resumeModal').classList.remove('hidden');
 
-  // 將求職者標記為「面試中」
   setCandidateStatus(cand.idNo, '面試中');
 
   const callbackName = 'cb_getResume_' + Date.now();
@@ -503,7 +508,7 @@ function openResumeModal(cand) {
     if (res && res.success && res.resume) {
       renderResumeDetails(res.resume);
     } else {
-      document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-amber-400 font-bold text-center py-2">⚠️ 求職登記表中未找到該求職者之詳細履歷資料</p>';
+      document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-amber-400 font-bold text-center py-4 text-base">⚠️ 求職登記表中未找到該求職者之詳細履歷資料</p>';
     }
     delete window[callbackName];
     const scriptEl = document.getElementById(callbackName);
@@ -515,24 +520,29 @@ function openResumeModal(cand) {
   document.body.appendChild(script);
 }
 
+/**
+ * 渲染履歷細項 (加大字體與行距)
+ */
 function renderResumeDetails(r) {
   document.getElementById('m_birthday').textContent = r['出生日期'] || '--';
   document.getElementById('m_phone').textContent = r['聯絡電話'] || '--';
   document.getElementById('m_email').textContent = r['E-mail'] || '--';
+  document.getElementById('m_education').textContent = r['最高學歷(畢業/肄業)'] || r['最高學歷'] || '--';
   document.getElementById('m_address').textContent = r['聯絡地址'] || '--';
   
   const container = document.getElementById('dynamicFieldsContainer');
   container.innerHTML = '';
-  const ignoredKeys = ['時間戳記', '機構運用', '活動資訊來源', '姓名', '出生日期', '身分證字號(居留證號)', '婚姻狀況', '兵役狀況', '聯絡地址', '聯絡電話', 'E-mail'];
+  const ignoredKeys = ['時間戳記', '機構運用', '活動資訊來源', '姓名', '出生日期', '身分證字號(居留證號)', '婚姻狀況', '兵役狀況', '聯絡地址', '聯絡電話', 'E-mail', '最高學歷(畢業/肄業)', '最高學歷'];
   let hasExtra = false;
-  let extraHtml = '<div class="bg-slate-800/90 rounded-xl p-4 sm:p-5 border border-purple-400/30 space-y-2.5"><h3 class="text-base font-black text-cyan-300 border-b border-slate-700 pb-1.5">💼 履歷詳細資訊</h3><div class="space-y-2.5 text-xs sm:text-sm">';
+  let extraHtml = '<div class="bg-slate-800/95 rounded-xl p-4 sm:p-6 border border-purple-400/40 space-y-4"><h3 class="text-lg sm:text-xl font-black text-cyan-300 border-b border-slate-700 pb-2">💼 工作經歷與自我推薦</h3><div class="space-y-4">';
+  
   for (let key in r) {
     if (!ignoredKeys.some(ik => key.includes(ik)) && r[key]) {
       hasExtra = true;
       extraHtml += `
         <div>
-          <span class="text-amber-300 font-bold block mb-1">【${key}】：</span>
-          <div class="bg-slate-900/80 p-2.5 rounded-lg text-gray-200 whitespace-pre-wrap font-medium">${r[key]}</div>
+          <span class="text-amber-300 font-extrabold text-base sm:text-lg block mb-1.5">【${key}】：</span>
+          <div class="bg-slate-900/90 p-4 rounded-xl text-gray-100 whitespace-pre-wrap font-medium text-base sm:text-lg leading-relaxed border border-slate-700/60">${r[key]}</div>
         </div>
       `;
     }
