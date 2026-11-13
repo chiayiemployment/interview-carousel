@@ -73,7 +73,12 @@
     </div>
     <div id="authBox" class="space-y-5 pt-2">
       <div class="text-left space-y-2">
-        <label for="companySelect" class="text-lg font-bold text-purple-200 block">請選擇公司名稱</label>
+        <div class="flex items-center justify-between">
+          <label for="companySelect" class="text-lg font-bold text-purple-200 block">請選擇公司名稱</label>
+          <button type="button" onclick="loadCompanyList(0)" class="text-xs sm:text-sm text-cyan-300 hover:text-amber-300 underline font-bold transition">
+            🔄 重新載入清單
+          </button>
+        </div>
         <select id="companySelect" class="w-full px-4 py-3 text-lg font-bold rounded-xl border-2 border-cyan-400 focus:outline-none focus:border-amber-300 transition">
           <option value="" disabled selected>載入廠商清單中...</option>
         </select>
@@ -182,7 +187,6 @@
 
       <!-- 📝 廠商面試評核回填區塊 -->
       <div class="bg-indigo-950/90 rounded-xl p-4 sm:p-6 border-2 border-amber-300 space-y-4 shadow-xl">
-        <!-- 標題與必選提示在手機版改為上下換行顯示 -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 border-b border-indigo-800 pb-2.5">
           <h3 class="text-lg sm:text-xl font-black text-amber-300">📝 廠商面試紀錄填寫</h3>
           <span class="text-sm text-amber-200 font-bold">⚠️ 錄取結果為必選項目</span>
@@ -245,13 +249,50 @@ let activeCandidate = null;
 let pollTimer = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadCompanyList();
+  loadCompanyList(0);
 });
 
-function loadCompanyList() {
+/**
+ * 統一 fetch API 請求核心 (含逾時控制與防快取，完美支援手機與 iOS 瀏覽器)
+ */
+async function callApi(paramsObj, timeoutMs = 10000) {
+  const url = new URL(SCRIPT_API_URL);
+  for (const [key, val] of Object.entries(paramsObj)) {
+    url.searchParams.append(key, val);
+  }
+  // 加上時間戳記避免手機或 CDN 快取
+  url.searchParams.append('_t', Date.now());
+
+  const controller = new AbortController();
+  const timerId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      redirect: 'follow',
+      signal: controller.signal
+    });
+    clearTimeout(timerId);
+    if (!response.ok) {
+      throw new Error(`HTTP 錯誤碼: ${response.status}`);
+    }
+    return await response.json();
+  } catch (err) {
+    clearTimeout(timerId);
+    throw err;
+  }
+}
+
+/**
+ * 1. 載入廠商清單 (內建最多 3 次自動重試)
+ */
+async function loadCompanyList(retryCount = 0) {
   const selectElem = document.getElementById('companySelect');
-  const callbackName = 'cb_getCompanyList_' + Date.now();
-  window[callbackName] = function(res) {
+  selectElem.innerHTML = `<option value="" disabled selected>${retryCount > 0 ? `連線較慢，自動重試中 (${retryCount}/3)...` : '載入廠商清單中...'}</option>`;
+
+  try {
+    const res = await callApi({ action: 'getCompanyList' }, 8000);
+
     if (res && res.success && Array.isArray(res.companyList)) {
       selectElem.innerHTML = '<option value="" disabled selected>-- 請選擇公司名稱 --</option>';
       res.companyList.forEach(compName => {
@@ -260,6 +301,7 @@ function loadCompanyList() {
         option.textContent = compName;
         selectElem.appendChild(option);
       });
+
       const urlParams = new URLSearchParams(window.location.search);
       const companyParam = urlParams.get('company') ? decodeURIComponent(urlParams.get('company')).trim() : '';
       if (companyParam) {
@@ -270,15 +312,17 @@ function loadCompanyList() {
           }
         }
       }
+    } else {
+      throw new Error(res.message || '清單格式異常');
     }
-    delete window[callbackName];
-    const scriptEl = document.getElementById(callbackName);
-    if (scriptEl) scriptEl.remove();
-  };
-  const script = document.createElement('script');
-  script.id = callbackName;
-  script.src = `${SCRIPT_API_URL}?action=getCompanyList&callback=${callbackName}`;
-  document.body.appendChild(script);
+  } catch (err) {
+    console.warn('載入清單失敗：', err);
+    if (retryCount < 3) {
+      setTimeout(() => loadCompanyList(retryCount + 1), 1500);
+    } else {
+      selectElem.innerHTML = '<option value="" disabled selected>⚠️ 載入失敗，請點右上角「重新載入清單」</option>';
+    }
+  }
 }
 
 function handleKeyPress(event) {
@@ -288,20 +332,31 @@ function handleKeyPress(event) {
   }
 }
 
-function submitPinAuth() {
+/**
+ * 2. 廠商驗證登入
+ */
+async function submitPinAuth() {
   const selectElem = document.getElementById('companySelect');
   const selectedCompany = selectElem.value;
   const pinInput = document.getElementById('pinInput').value.trim();
+
   if (!selectedCompany || pinInput.length !== 8) {
     alert('請選擇公司並輸入完整的 8 位數密碼！');
     return;
   }
+
   const authBox = document.getElementById('authBox');
   const loadingBox = document.getElementById('loadingBox');
   authBox.classList.add('hidden');
   loadingBox.classList.remove('hidden');
 
-  fetchCandidateList(selectedCompany, pinInput, (res) => {
+  try {
+    const res = await callApi({
+      action: 'loginAndFetchList',
+      company: selectedCompany,
+      pin: pinInput
+    }, 12000);
+
     if (res && res.success) {
       currentCompany = selectedCompany;
       currentPin = pinInput;
@@ -313,61 +368,38 @@ function submitPinAuth() {
       renderCandidateCards();
       startPolling();
     } else {
-      alert(res.message || '🔒 密碼錯誤！請輸入 8 位數密碼。');
+      alert((res && res.message) || '🔒 密碼錯誤！請輸入貴公司專屬的 8 位數密碼。');
       authBox.classList.remove('hidden');
       loadingBox.classList.add('hidden');
     }
-  });
+  } catch (err) {
+    alert('連線逾時或網路不穩，請確認網路狀態後再試一次！');
+    authBox.classList.remove('hidden');
+    loadingBox.classList.add('hidden');
+  }
 }
 
-function fetchCandidateList(comp, pin, callback) {
-  const callbackName = 'cb_fetch_' + Date.now();
-  let isHandled = false;
-  const timeoutTimer = setTimeout(() => {
-    if (!isHandled) {
-      isHandled = true;
-      delete window[callbackName];
-      const el = document.getElementById(callbackName);
-      if (el) el.remove();
-      if (callback) callback(null);
-    }
-  }, 8000);
-
-  window[callbackName] = function(res) {
-    if (isHandled) return;
-    isHandled = true;
-    clearTimeout(timeoutTimer);
-    if (callback) callback(res);
-    delete window[callbackName];
-    const scriptEl = document.getElementById(callbackName);
-    if (scriptEl) scriptEl.remove();
-  };
-
-  const script = document.createElement('script');
-  script.id = callbackName;
-  script.src = `${SCRIPT_API_URL}?action=loginAndFetchList&company=${encodeURIComponent(comp)}&pin=${encodeURIComponent(pin)}&callback=${callbackName}`;
-  
-  script.onerror = function() {
-    if (isHandled) return;
-    isHandled = true;
-    clearTimeout(timeoutTimer);
-    if (callback) callback(null);
-    delete window[callbackName];
-    script.remove();
-  };
-  document.body.appendChild(script);
-}
-
+/**
+ * 3. 每 4 秒自動背景輪詢同步進度
+ */
 function startPolling() {
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(() => {
+  pollTimer = setInterval(async () => {
     if (!activeCandidate && currentCompany && currentPin) {
-      fetchCandidateList(currentCompany, currentPin, (res) => {
-        if (res && res.success) {
+      try {
+        const res = await callApi({
+          action: 'loginAndFetchList',
+          company: currentCompany,
+          pin: currentPin
+        }, 8000);
+
+        if (res && res.success && !activeCandidate) {
           currentCandidates = res.candidates || [];
           renderCandidateCards();
         }
-      });
+      } catch (err) {
+        // 背景輪詢遇網路瞬斷靜默忽略，等待下一個週期
+      }
     }
   }, 4000);
 }
@@ -519,9 +551,9 @@ function formatRocDate(dateStr) {
 }
 
 /**
- * 開啟履歷
+ * 4. 開啟履歷並載入詳細資料
  */
-function openResumeModal(cand) {
+async function openResumeModal(cand) {
   activeCandidate = cand;
   document.getElementById('modalCandidateName').textContent = cand.name;
   document.getElementById('modalJobTitle').textContent = cand.jobTitle;
@@ -556,23 +588,23 @@ function openResumeModal(cand) {
   document.getElementById('dynamicFieldsContainer').innerHTML = '<div class="py-4 text-center text-cyan-300 font-bold text-base"><span class="spinner"></span> 正在載入完整履歷資料...</div>';
   document.getElementById('resumeModal').classList.remove('hidden');
 
+  // 標記狀態為「面試中」
   setCandidateStatus(cand.idNo, '面試中');
 
-  const callbackName = 'cb_getResume_' + Date.now();
-  window[callbackName] = function(res) {
+  try {
+    const res = await callApi({
+      action: 'getResumeDetail',
+      idNo: cand.idNo
+    }, 10000);
+
     if (res && res.success && res.resume) {
       renderResumeDetails(res.resume, cand.idNo);
     } else {
       document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-amber-400 font-bold text-center py-4 text-base">⚠️ 求職登記表中未找到該求職者之詳細履歷資料</p>';
     }
-    delete window[callbackName];
-    const scriptEl = document.getElementById(callbackName);
-    if (scriptEl) scriptEl.remove();
-  };
-  const script = document.createElement('script');
-  script.id = callbackName;
-  script.src = `${SCRIPT_API_URL}?action=getResumeDetail&idNo=${encodeURIComponent(cand.idNo)}&callback=${callbackName}`;
-  document.body.appendChild(script);
+  } catch (err) {
+    document.getElementById('dynamicFieldsContainer').innerHTML = '<p class="text-rose-400 font-bold text-center py-4 text-base">❌ 載入履歷資料逾時，請關閉後重試</p>';
+  }
 }
 
 /**
@@ -609,23 +641,25 @@ function renderResumeDetails(r, rawIdNo) {
     }
   }
 
-  if (extraHtml) {
-    container.innerHTML = extraHtml;
-  } else {
-    container.innerHTML = '';
-  }
-}
-
-function setCandidateStatus(idNo, status) {
-  const script = document.createElement('script');
-  script.src = `${SCRIPT_API_URL}?action=setInterviewStatus&company=${encodeURIComponent(currentCompany)}&idNo=${encodeURIComponent(idNo)}&status=${encodeURIComponent(status)}`;
-  document.body.appendChild(script);
+  container.innerHTML = extraHtml;
 }
 
 /**
- * 儲存面試資料
+ * 5. 更新協同面試鎖定狀態
  */
-function submitEvaluation() {
+function setCandidateStatus(idNo, status) {
+  callApi({
+    action: 'setInterviewStatus',
+    company: currentCompany,
+    idNo: idNo,
+    status: status
+  }, 8000).catch(err => console.warn('狀態更新延遲:', err));
+}
+
+/**
+ * 6. 儲存面試資料
+ */
+async function submitEvaluation() {
   if (!activeCandidate) return;
   const isAccepted = document.getElementById('modalIsAccepted').checked;
   const isRejected = document.getElementById('modalIsRejected').checked;
@@ -640,10 +674,18 @@ function submitEvaluation() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner !w-4 !h-4 border-2"></span> 正在儲存...';
 
-  const callbackName = 'cb_saveEval_' + Date.now();
-  window[callbackName] = function(res) {
+  try {
+    const res = await callApi({
+      action: 'saveInterviewResult',
+      company: currentCompany,
+      idNo: activeCandidate.idNo,
+      isAccepted: String(isAccepted),
+      notes: notes
+    }, 15000);
+
     btn.disabled = false;
     btn.innerHTML = '儲存面試資料';
+
     if (res && res.success) {
       alert('✅ 面試紀錄已成功儲存！');
       activeCandidate.isAccepted = isAccepted;
@@ -654,17 +696,13 @@ function submitEvaluation() {
       document.getElementById('resumeModal').classList.add('hidden');
       activeCandidate = null;
     } else {
-      alert('❌ 儲存失敗：' + (res.message || '未知錯誤'));
+      alert('❌ 儲存失敗：' + ((res && res.message) || '未知錯誤'));
     }
-    delete window[callbackName];
-    const scriptEl = document.getElementById(callbackName);
-    if (scriptEl) scriptEl.remove();
-  };
-
-  const script = document.createElement('script');
-  script.id = callbackName;
-  script.src = `${SCRIPT_API_URL}?action=saveInterviewResult&company=${encodeURIComponent(currentCompany)}&idNo=${encodeURIComponent(activeCandidate.idNo)}&isAccepted=${isAccepted}&notes=${encodeURIComponent(notes)}&callback=${callbackName}`;
-  document.body.appendChild(script);
+  } catch (err) {
+    btn.disabled = false;
+    btn.innerHTML = '儲存面試資料';
+    alert('❌ 儲存失敗：網路連線逾時，請再按一次「儲存面試資料」！');
+  }
 }
 
 /**
