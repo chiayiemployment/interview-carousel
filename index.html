@@ -181,7 +181,7 @@
           </div>
         </div>
 
-        <!-- 併入基本資料內部的履歷其餘欄位（最高學歷置於畢(肄)業學校上方） -->
+        <!-- 併入基本資料內部的履歷其餘欄位（最高學歷置於畢(肄)業學校上方，無後方冒號） -->
         <div id="dynamicFieldsContainer" class="pt-3 border-t border-slate-700/80 space-y-4"></div>
       </div>
 
@@ -606,7 +606,7 @@ async function openResumeModal(cand) {
 }
 
 /**
- * 渲染履歷細項 (將【最高學歷】置於【畢(肄)業學校】正上方)
+ * 渲染履歷細項 (【最高學歷】置於【畢(肄)業學校】正上方，並取消後方冒號)
  */
 function renderResumeDetails(r, rawIdNo) {
   document.getElementById('m_birthday').textContent = formatRocDate(r['出生日期']);
@@ -635,7 +635,7 @@ function renderResumeDetails(r, rawIdNo) {
     }
   }
 
-  // 若同時存在「最高學歷」與「畢(肄)業學校」，確保「最高學歷」排在「畢(肄)業學校」正上方
+  // 確保「最高學歷」排在「畢(肄)業學校」正上方
   const eduIdx = entries.findIndex(e => e.key.includes('最高學歷'));
   const schoolIdx = entries.findIndex(e => e.key.includes('學校'));
   if (eduIdx !== -1 && schoolIdx !== -1 && eduIdx > schoolIdx) {
@@ -648,7 +648,7 @@ function renderResumeDetails(r, rawIdNo) {
   entries.forEach(item => {
     extraHtml += `
       <div class="pt-1">
-        <span class="text-amber-300 font-extrabold text-base sm:text-lg block mb-1">【${item.key}】：</span>
+        <span class="text-amber-300 font-extrabold text-base sm:text-lg block mb-1">【${item.key}】</span>
         <div class="bg-slate-900/90 p-4 rounded-xl text-gray-100 whitespace-pre-wrap font-medium text-base sm:text-lg leading-relaxed border border-slate-700/60">${item.val}</div>
       </div>
     `;
