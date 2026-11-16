@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>預約面試</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        deepPurple: '#1F1D53', midPurple: '#6B257F', darkPurple: '#4C237C',
+                        deepBlue: '#053D88', blue: '#01529F', royalBlue: '#2956A8',
+                        lightPurple: '#A48DCD', nearWhite: '#EDEEF7', white: '#FFFFFF',
+                        circuitCyan: '#28C4FF', dateBlockBg: '#7E2AFF',
+                        buttonGradStart: '#AC3FFF', buttonGradEnd: '#6A1BCB',
+                        errorRed: '#ff6b6b', successGreen: '#4ade80',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --deep-purple: #1F1D53; --mid-purple: #6B257F; --dark-purple: #4C237C;
+            --deep-blue: #053D88; --blue: #01529F; --royal-blue: #2956A8;
+            --light-purple: #A48DCD; --near-white: #EDEEF7; --white: #FFFFFF;
+            --bright-cyan: #28C4FF; --date-purple: #7E2AFF;
+            --button-start: #AC3FFF; --button-end: #6A1BCB;
+            --error-red-color: #ff6b6b; --success-green-color: #4ade80;
+        }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--deep-purple); color: var(--white); position: relative; overflow-x: hidden; min-height: 100vh; }
+        .circuit-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+        .circuit-line { position: absolute; background-color: var(--dark-purple); box-shadow: 0 0 5px var(--blue); }
+        .circuit-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background-color: var(--bright-cyan); box-shadow: 0 0 8px var(--bright-cyan); }
+        .left-gradient { position: fixed; top: 0; left: 0; width: 30%; height: 100%; background: linear-gradient(90deg, var(--deep-blue) 0%, rgba(5, 61, 136, 0) 100%); z-index: 1; pointer-events: none; }
+        .main-content-wrapper { position: relative; z-index: 10; }
+        .form-container { position: relative; background: linear-gradient(135deg, rgba(31, 29, 83, 0.9) 0%, rgba(76, 35, 124, 0.8) 100%); border-radius: 16px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(4px); border: 1px solid rgba(164, 141, 205, 0.18); }
+        .form-header { background: linear-gradient(90deg, var(--deep-blue), var(--dark-purple)); border-bottom: 2px solid var(--bright-cyan); box-shadow: 0 4px 12px rgba(5, 61, 136, 0.5); }
+        .form-title { text-shadow: 0 2px 4px var(--mid-purple); }
+        input[type="text"], select { background-color: rgba(31, 29, 83, 0.7) !important; border: 1px solid var(--light-purple) !important; color: var(--white) !important; transition: all 0.3s ease !important; border-radius: 8px !important; }
+        input::placeholder { color: rgba(237, 238, 247, 0.6) !important; }
+        select { appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23a48dcd"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>') !important; background-repeat: no-repeat !important; background-position: right 0.75rem center !important; background-size: 1.2em 1.2em !important; padding-right: 2.5rem !important; }
+        input:focus, select:focus { border-color: var(--bright-cyan) !important; box-shadow: 0 0 0 2px rgba(40, 196, 255, 0.3) !important; outline: none !important; background-color: rgba(31, 29, 83, 0.8) !important; }
+        select option { background-color: var(--dark-purple); color: var(--white); }
+        .submit-btn { background: linear-gradient(135deg, var(--button-start), var(--button-end)); box-shadow: 0 4px 12px rgba(172, 63, 255, 0.3); transition: all 0.3s ease; position: relative; border-radius: 8px; color: var(--white); font-weight: 500; border: none; cursor: pointer; text-align: center; }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .spinner { border: 3px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: var(--white); width: 1.25rem; height: 1.25rem; animation: spin 1s linear infinite; display: inline-block; margin-left: 0.5rem; vertical-align: middle; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .company-position-entry { background-color: rgba(76, 35, 124, 0.15); border: 1px solid var(--light-purple); border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+        .company-position-title { color: var(--bright-cyan); font-weight: 600; font-size: 1.125rem; margin-bottom: 0.75rem; }
+        .result-container { background: linear-gradient(135deg, rgba(41, 86, 168, 0.7), rgba(76, 35, 124, 0.7)); border: 1px solid var(--light-purple); border-radius: 12px; }
+        .error-message { color: var(--error-red-color); font-size: 0.875rem; margin-top: 0.25rem; font-weight: 500; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="min-h-screen py-8 text-lg text-white px-4 sm:px-6">
+    <div class="circuit-background" id="circuitBackground"></div>
+    <div class="left-gradient"></div>
+    <div class="main-content-wrapper">
+        <div class="max-w-3xl mx-auto">
+            <div class="form-container p-5 sm:p-7 md:p-9">
+                <div class="form-header -mx-5 sm:-mx-7 md:-mx-9 -mt-5 sm:-mt-7 md:-mt-9 mb-8 sm:mb-10 py-5 px-5 sm:py-6 sm:px-7 md:px-9 rounded-t-lg">
+                    <h1 class="form-title text-3xl lg:text-4xl font-bold text-center">預約面試</h1>
+                </div>
+                <form id="reservation-form" class="space-y-8 md:space-y-7">
+                    <div>
+                        <label for="name" class="block text-lg md:text-base font-medium text-nearWhite mb-2">姓名<span class="text-errorRed">*</span></label>
+                        <input type="text" id="name" name="name" required class="w-full px-4 py-3 text-lg md:text-base rounded-lg placeholder-gray-400" placeholder="請輸入您的姓名">
+                    </div>
+                    <div>
+                        <label for="id" class="block text-lg md:text-base font-medium text-nearWhite mb-2">身分證字號/居留證號<span class="text-errorRed">*</span></label>
+                        <input type="text" id="id" name="id" required class="w-full px-4 py-3 text-lg md:text-base rounded-lg placeholder-gray-400 uppercase" placeholder="請輸入身分證字號或居留證號">
+                        <div id="id-error" class="error-message hidden">請輸入有效的證號</div>
+                    </div>
+                    <p class="text-lg font-bold text-left text-[#FFC72C] mb-4">如欲應徵兩項以上職務，請於面試時告知。</p>
+                    
+                    <div class="space-y-6" id="company-position-list-container"> 
+                        <div class="text-center p-4 w-full text-nearWhite">公司與職務列表載入中...</div>
+                    </div>
+                    <div class="pt-5">
+                        <button type="submit" id="submit-button" class="submit-btn w-full px-4 py-3 text-2xl lg:text-3xl md:text-xl md:py-3">
+                            <span id="submit-button-text">提交預約</span>
+                            <span id="loading-spinner" class="spinner hidden"></span>
+                        </button>
+                    </div>
+                </form>
+                <div id="status-message" class="mt-4 hidden"></div>
+            </div>
+            <div id="result-container" class="result-container p-6 sm:p-8 hidden mt-8"> 
+                <h2 class="text-2xl md:text-xl font-bold mb-6 text-center text-white">預約資訊確認</h2>
+                <div id="result-content" class="space-y-4 text-nearWhite"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // ================== 【重要設定】請填入與履歷頁相同的 GAS 網頁應用程式網址 ==================
+        const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbzxPu3JcZWv_gDo9v489SjnC-OEJMxjeiEbHYtm4kV-tCv--dA9PPNch0Tc9z1HAHfSPw/exec';
+
+        const reservationForm = document.getElementById('reservation-form');
+        const companyListContainer = document.getElementById('company-position-list-container');
+        const statusMessageEl = document.getElementById('status-message');
+        const idInput = document.getElementById('id');
+
+        // 統一呼叫後端 GAS API 的共用函式
+        async function callGasApi(action, payload = {}) {
+            const response = await fetch(GAS_WEB_APP_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: action, ...payload })
+            });
+            if (!response.ok) {
+                throw new Error(`網路連線異常 (HTTP ${response.status})`);
+            }
+            return await response.json();
+        }
+
+        // 身分證轉大寫與過濾空白
+        idInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        });
+
+        // 載入公司職缺 (改用 fetch)
+        document.addEventListener('DOMContentLoaded', async () => {
+            createCircuitBackground();
+            try {
+                const res = await fetch(`${GAS_WEB_APP_URL}?action=getCompanyData`);
+                const data = await res.json();
+                populateSelectors(Array.isArray(data) ? data : []);
+            } catch (err) {
+                console.error('載入職缺列表失敗:', err);
+                companyListContainer.innerHTML = '<div class="text-center p-4 w-full text-errorRed">無法載入公司與職務列表，請重新整理頁面。</div>';
+            }
+        });
+
+        function populateSelectors(data) {
+            companyListContainer.innerHTML = '';
+            if (!data || data.length === 0) {
+                companyListContainer.innerHTML = '<div class="text-center p-4 w-full text-gray-400">目前尚無提供預約之職缺。</div>';
+                return;
+            }
+            data.forEach((item) => {
+                const div = document.createElement('div');
+                div.className = 'company-position-entry';
+                div.innerHTML = `<h3 class="company-position-title">${item.company}</h3>
+                    <select class="w-full px-4 py-3 rounded-lg" data-company="${item.company}">
+                        <option value="">請選擇</option>
+                        ${item.positions.map(p => `<option value="${p}">${p}</option>`).join('')}
+                    </select>`;
+                companyListContainer.appendChild(div);
+            });
+        }
+
+        reservationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const id = idInput.value.toUpperCase().trim();
+            const pairs = [];
+            
+            companyListContainer.querySelectorAll('select').forEach(s => {
+                if (s.value) pairs.push({ company: s.dataset.company, position: s.value });
+            });
+            if (pairs.length === 0) {
+                alert('請至少選擇一個職務');
+                return;
+            }
+
+            statusMessageEl.classList.add('hidden');
+            document.getElementById('result-container').classList.add('hidden');
+            setLoading(true);
+            
+            try {
+                // 呼叫整合版 GS 端：檢查有無履歷並處理預約 + 直接寫入各廠商試算表
+                const res = await callGasApi('checkAndBook', {
+                    data: { name: name, idNumber: id, companyPositions: pairs }
+                });
+                handleResponse(res);
+            } catch (err) {
+                setLoading(false);
+                const errMsg = '連線發生錯誤，請稍後再試：' + err.message;
+                alert(errMsg);
+                showStatusMessage(errMsg, 'error');
+            }
+        });
+
+        function handleResponse(res) {
+            setLoading(false);
+            if (res.success) {
+                alert('預約成功！');
+                const bookedListHtml = (res.data.companyPositionPairs || [])
+                    .map(p => `<li class="ml-4 list-disc text-successGreen font-medium">${p.company} － ${p.position}</li>`)
+                    .join('');
+
+                document.getElementById('result-container').classList.remove('hidden');
+                document.getElementById('result-content').innerHTML = `
+                    <p>預約時間：${res.data.timestamp}</p>
+                    <p>求職姓名：${res.data.name}</p>
+                    <p>已成功預約 ${res.data.companyPositionPairs.length} 個職位：</p>
+                    <ul class="space-y-1 mt-2">${bookedListHtml}</ul>`;
+                reservationForm.reset();
+                window.scrollTo({ top: document.getElementById('result-container').offsetTop - 20, behavior: 'smooth' });
+            } else {
+                // 如果後端傳回查無履歷或其他錯誤，顯示提醒
+                alert(res.message);
+                showStatusMessage(res.message, 'error');
+            }
+        }
+
+        function setLoading(isLoading) {
+            document.getElementById('submit-button').disabled = isLoading;
+            document.getElementById('loading-spinner').classList.toggle('hidden', !isLoading);
+            document.getElementById('submit-button-text').textContent = isLoading ? '處理中...' : '提交預約';
+        }
+
+        function showStatusMessage(msg, type) {
+            statusMessageEl.textContent = msg;
+            statusMessageEl.className = `p-4 mt-4 rounded-lg font-medium ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+            statusMessageEl.classList.remove('hidden');
+        }
+
+        function createCircuitBackground() {
+            const bg = document.getElementById('circuitBackground');
+            for (let i = 0; i < 20; i++) {
+                const line = document.createElement('div');
+                line.className = 'circuit-line';
+                line.style.top = Math.random() * 100 + '%';
+                line.style.left = Math.random() * 70 + '%';
+                line.style.width = Math.random() * 30 + 10 + '%';
+                line.style.height = '1px';
+                bg.appendChild(line);
+            }
+        }
+    </script>
+</body>
+</html>
