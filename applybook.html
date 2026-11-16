@@ -87,6 +87,16 @@ font-weight: 500; cursor: pointer; text-align: center; }
 <div class="circuit-background" id="circuitBackground"></div>
 <div class="left-gradient"></div>
 <div class="main-content-area max-w-3xl mx-auto">
+<!-- 頂部頁面切換導覽列 -->
+<div class="grid grid-cols-2 gap-3 mb-6 bg-[#1F1D53]/90 p-2 rounded-xl border border-[#A48DCD]/40 shadow-lg">
+  <a href="applybook.html" class="py-3 px-2 rounded-lg text-center font-bold text-base sm:text-lg bg-gradient-to-r from-[#AC3FFF] to-[#6A1BCB] text-white shadow-md pointer-events-none flex items-center justify-center">
+    1. 填寫履歷並預約
+  </a>
+  <a href="jobbooking.html" class="py-3 px-2 rounded-lg text-center font-medium text-base sm:text-lg text-[#EDEEF7] hover:bg-[#4C237C]/60 hover:text-[#28C4FF] transition-all flex items-center justify-center">
+    2. 已有履歷・直接預約 →
+  </a>
+</div>
+
 <div id="generalMessageArea" class="status-message hidden"></div>
 <div id="formContainer" class="form-container p-5 sm:p-7 md:p-9">
 <div class="form-header -mx-5 sm:-mx-7 md:-mx-9 -mt-5 sm:-mt-7 md:-mt-9 mb-8 sm:mb-10 py-5 px-5 sm:py-6 sm:px-7 md:px-9 rounded-t-lg">
@@ -450,7 +460,7 @@ companyListContainer.appendChild(d);
 reviewSection.classList.add('hidden'); appointmentSection.classList.remove('hidden'); window.scrollTo(0, 0);
 }
 
-// 1. 載入公司與職缺清單 (改用 fetch)
+// 1. 載入公司與職缺清單
 async function fetchCompanyData() {
   try {
     const res = await fetch(`${GAS_WEB_APP_URL}?action=getCompanyData`);
@@ -485,7 +495,7 @@ window.formData = dReview; displayDataInReview(dReview, false);
 editBtn.addEventListener('click', () => { populateFormWithData(window.formData); reviewSection.classList.add('hidden'); mainFormContainer.classList.remove('hidden'); });
 exitReviewBtn.addEventListener('click', fullFormReset);
 
-// 2. 確認履歷並檢查/覆蓋重複履歷 (改用 fetch)
+// 2. 確認履歷並檢查/覆蓋重複履歷
 confirmBtn.addEventListener('click', async function() {
   const d = { ...window.formData };
   delete d.timestamp_review_generated_at;
@@ -494,7 +504,6 @@ confirmBtn.addEventListener('click', async function() {
   confirmBtn.innerHTML = '處理中... <span class="spinner"></span>';
 
   try {
-    // 若進到這一步時職缺還沒載入成功，再補抓一次
     if (!window.companyData || window.companyData.length === 0) {
       await fetchCompanyData();
     }
@@ -530,7 +539,7 @@ confirmBtn.addEventListener('click', async function() {
 
 backToReviewBtn.addEventListener('click', () => { appointmentSection.classList.add('hidden'); reviewSection.classList.remove('hidden'); });
 
-// 3. 確認預約面試並直接寫入廠商試算表 (改用 fetch)
+// 3. 確認預約面試並直接寫入廠商試算表
 confirmAppointmentBtn.addEventListener('click', async function() {
   const sels = companyListContainer.querySelectorAll('select[data-company]');
   const pos = [];
@@ -575,4 +584,4 @@ successMessageContent.innerHTML = h; successMessageContainer.classList.remove('h
 });
 </script>
 </body>
-</html>
+</html>F
